@@ -1,47 +1,47 @@
 # halo-skills
 
-Repositorio privado de skills de Halo. Cada merge a `main` genera y publica automáticamente los plugins de Claude Code a [marketplace-ai](https://github.com/AndersHalo/marketplace-ai).
+Private Halo skills repository. Every merge to `main` automatically builds and publishes Claude Code plugins to [marketplace-ai](https://github.com/AndersHalo/marketplace-ai).
 
 ---
 
-## Cómo funciona
+## How it works
 
 ```
 skills/          →  build:plugins  →  dist/  →  marketplace-ai
 platforms/
 ```
 
-1. Los autores editan skills en `skills/` y declaran plugins en `platforms/marketplace.yaml`
-2. Cada PR corre validación de schema
-3. Cada merge a `main` genera los plugins y los publica automáticamente
+1. Authors edit skills in `skills/` and declare plugins in `platforms/marketplace.yaml`
+2. Every PR runs schema validation
+3. Every merge to `main` generates plugins and publishes them automatically
 
 ---
 
-## Estructura
+## Structure
 
 ```
 skills/
   {skill-name}/
-    SKILL.md              # contenido del skill
-    .skill-meta.json      # metadata: versión, categoría, tags, plataformas
+    SKILL.md              # skill content
+    .skill-meta.json      # metadata: version, category, tags, platforms
 
 platforms/
-  marketplace.yaml        # declara qué skills forman cada plugin
-  bmad.yaml               # declara qué skills van a BMAD (pendiente)
+  marketplace.yaml        # declares which skills form each plugin
+  bmad.yaml               # declares which skills go to BMAD (pending)
 
 build/
-  skill-to-plugin.ts      # genera plugins para marketplace
-  generate-manifest.ts    # genera índice de skills
-  prompts/                # prompts de transform BMAD (pendiente)
+  skill-to-plugin.ts      # generates marketplace plugins
+  generate-manifest.ts    # generates skills index
+  prompts/                # BMAD transform prompts (pending)
 ```
 
 ---
 
-## Agregar un skill nuevo
+## Adding a new skill
 
-1. Crear la carpeta `skills/{skill-name}/`
-2. Agregar `SKILL.md` con el contenido del skill
-3. Agregar `.skill-meta.json`:
+1. Create the folder `skills/{skill-name}/`
+2. Add `SKILL.md` with the skill content
+3. Add `.skill-meta.json`:
 
 ```json
 {
@@ -51,21 +51,21 @@ build/
   "platforms": ["marketplace"],
   "category": "css",
   "tags": ["css", "responsive"],
-  "skill_description": "Descripción de mínimo 20 caracteres.",
+  "skill_description": "At least 20 characters describing what this skill does.",
   "author": {
-    "name": "Tu nombre",
-    "email": "tu@halopowered.com"
+    "name": "Your name",
+    "email": "you@halopowered.com"
   }
 }
 ```
 
-4. Abrir PR → merge → el CI publica automáticamente
+4. Open PR → merge → CI publishes automatically
 
 ---
 
-## Publicar un skill en un plugin
+## Publishing a skill to a plugin
 
-Editar `platforms/marketplace.yaml` y agregar el skill al plugin correspondiente:
+Edit `platforms/marketplace.yaml` and add the skill to the relevant plugin:
 
 ```yaml
 plugins:
@@ -73,29 +73,29 @@ plugins:
     description: "..."
     skills:
       - martech-css
-      - my-skill       # agregar aquí
+      - my-skill       # add here
 ```
 
-Si el plugin no existe, crear una nueva entrada. El CI genera todo lo demás.
+If the plugin doesn't exist, create a new entry. CI generates everything else.
 
 ---
 
-## Versionado
+## Versioning
 
-| Qué | Versión | Quién |
-|-----|---------|-------|
-| Skill | `skill_version` en `.skill-meta.json` | Autor, manual |
-| Plugin | `YYYY-MM-DD-{git-sha}` del último cambio | CI automático |
+| What | Version | Who |
+|------|---------|-----|
+| Skill | `skill_version` in `.skill-meta.json` | Author, manual |
+| Plugin | `YYYY-MM-DD-{git-sha}` of last change | CI automatic |
 
-La versión del plugin solo cambia cuando cambian sus skills — no en cada merge.
+Plugin version only bumps when its skills change — not on every merge.
 
 ---
 
 ## CI/CD
 
-| Workflow | Cuándo corre | Qué hace |
-|----------|-------------|---------|
-| `validate.yml` | Cada PR | Valida schema de `.skill-meta.json` |
-| `release.yml` | Cada merge a `main` | Genera plugins y publica a `marketplace-ai` |
+| Workflow | When | What |
+|----------|------|------|
+| `validate.yml` | Every PR | Validates `.skill-meta.json` schema |
+| `release.yml` | Every merge to `main` | Builds plugins and publishes to `marketplace-ai` |
 
-**Secret requerido:** `MARKETPLACE_DEPLOY_KEY` — SSH deploy key con write access a `marketplace-ai`.
+**Required secret:** `MARKETPLACE_DEPLOY_KEY` — SSH deploy key with write access to `marketplace-ai`.

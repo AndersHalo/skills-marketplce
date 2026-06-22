@@ -1,16 +1,16 @@
-# halo-skills — contexto para Claude
+# halo-skills — context for Claude
 
-Repo privado de skills de Halo. Convierte un filesystem de skills en plugins de Claude Code publicados automáticamente via CI.
+Private Halo skills repository. Converts a skills filesystem into Claude Code plugins published automatically via CI.
 
-## Estructura clave
+## Key structure
 
-- `skills/{name}/SKILL.md` — contenido del skill (lo que se instala)
-- `skills/{name}/.skill-meta.json` — metadata: versión, categoría, tags, plataformas
-- `platforms/marketplace.yaml` — declara qué skills forman cada plugin
-- `build/skill-to-plugin.ts` — genera `dist/` con la estructura de plugins
-- `build/generate-manifest.ts` — genera `dist/skills-manifest.json` con índice de skills
+- `skills/{name}/SKILL.md` — skill content (what gets installed)
+- `skills/{name}/.skill-meta.json` — metadata: version, category, tags, platforms
+- `platforms/marketplace.yaml` — declares which skills form each plugin
+- `build/skill-to-plugin.ts` — generates `dist/` with plugin structure
+- `build/generate-manifest.ts` — generates `dist/skills-manifest.json` with skills index
 
-## Schema de .skill-meta.json (v2)
+## .skill-meta.json schema (v2)
 
 ```json
 {
@@ -19,35 +19,35 @@ Repo privado de skills de Halo. Convierte un filesystem de skills en plugins de 
   "skill_version": "1.0.0",
   "platforms": ["marketplace"],
   "category": "css | javascript | deploy | analytics | design",
-  "tags": ["array", "de", "keywords"],
-  "skill_description": "Mínimo 20 caracteres, máximo 500.",
+  "tags": ["array", "of", "keywords"],
+  "skill_description": "At least 20 characters, max 500.",
   "author": { "name": "...", "email": "...@halopowered.com" }
 }
 ```
 
-Campos legacy eliminados: `output_folder`, `skill_inputs`, `skill_process`, `skill_outputs`, `aux_files`, `applied_suggestions`.
+Removed legacy fields: `output_folder`, `skill_inputs`, `skill_process`, `skill_outputs`, `aux_files`, `applied_suggestions`.
 
-## Comandos
+## Commands
 
 ```bash
-npm run validate        # valida todos los .skill-meta.json con Zod
-npm run build:plugins   # genera dist/plugins/ y dist/.claude-plugin/marketplace.json
-npm run build:manifest  # genera dist/skills-manifest.json
-npm run release         # corre manifest + plugins + bmad (bmad pendiente)
+npm run validate        # validates all .skill-meta.json files with Zod
+npm run build:plugins   # generates dist/plugins/ and dist/.claude-plugin/marketplace.json
+npm run build:manifest  # generates dist/skills-manifest.json
+npm run release         # runs manifest + plugins + bmad (bmad pending)
 ```
 
-## Versionado de plugins
+## Plugin versioning
 
-La versión del plugin se deriva del último commit git que tocó sus archivos — no es global ni manual. Si solo cambia `martech-css`, solo `martech-foundation` recibe una versión nueva.
+Plugin version is derived from the last git commit that touched its files — not global, not manual. If only `martech-css` changes, only `martech-foundation` gets a new version.
 
 ## CI
 
-- `validate.yml` — corre en PRs que tocan `skills/**` o `platforms/*.yaml`
-- `release.yml` — corre en merge a `main`, genera `dist/` y lo pushea a `marketplace-ai` via SSH deploy key (`MARKETPLACE_DEPLOY_KEY`)
+- `validate.yml` — runs on PRs touching `skills/**` or `platforms/*.yaml`
+- `release.yml` — runs on merge to `main`, generates `dist/` and pushes to `marketplace-ai` via SSH deploy key (`MARKETPLACE_DEPLOY_KEY`)
 
-## Lo que NO hacer
+## Do NOT
 
-- No editar `dist/` manualmente — es output del CI
-- No editar `marketplace-ai` manualmente — es output puro del CI
-- No usar campos del schema v1 en skills nuevos
-- El script `build:bmad` no está implementado todavía — no agregar skills a `platforms/bmad.yaml` hasta que esté listo
+- Edit `dist/` manually — it is CI output
+- Edit `marketplace-ai` manually — it is pure CI output
+- Use schema v1 fields in new skills
+- Add skills to `platforms/bmad.yaml` — `build:bmad` is not implemented yet
