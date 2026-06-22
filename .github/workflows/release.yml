@@ -28,7 +28,7 @@ jobs:
       - name: Push to marketplace-ai
         uses: cpina/github-action-push-to-another-repository@v1.7.3
         env:
-          API_TOKEN: ${{ secrets.MARKETPLACE_DEPLOY_KEY }}
+          SSH_DEPLOY_KEY: ${{ secrets.MARKETPLACE_DEPLOY_KEY }}
         with:
           source-directory: 'dist/'
           destination-github-username: 'AndersHalo'
