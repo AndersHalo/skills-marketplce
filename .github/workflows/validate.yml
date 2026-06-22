@@ -3,8 +3,8 @@ name: Validate Skills
 on:
   pull_request:
     paths:
-      - '_skills/**'
-      - '_platforms/*.yaml'
+      - 'skills/**'
+      - 'platforms/*.yaml'
 
 jobs:
   validate:
