@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "skill_name": "martech-css",
+  "skill_version": "1.0.0",
+  "platforms": ["marketplace"],
+  "output_folder": "_skills/martech-css/",
+  "author": {
+    "name": "Susan Joo",
+    "email": "susan@halopowered.com"
+  },
+  "skill_description": "General CSS conventions used across all client web projects regardless of platform (HubSpot, Shopify, WordPress). Covers BEM naming, fluid typography with clamp(), grid/flex layout, button patterns, responsive breakpoint strategy, transitions/animation, and CSS accessibility.",
+  "skill_inputs": [],
+  "skill_process": "",
+  "skill_outputs": "",
+  "aux_files": [],
+  "applied_suggestions": []
+}

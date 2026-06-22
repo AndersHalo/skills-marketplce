@@ -1,0 +1,20 @@
+{
+  "name": "halo-skills",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "validate": "tsx build/validate-skills.ts",
+    "build:manifest": "tsx build/generate-manifest.ts",
+    "build:plugins": "tsx build/skill-to-plugin.ts",
+    "build:bmad": "tsx build/skill-to-bmad.ts",
+    "release": "npm run build:manifest && npm run build:plugins && npm run build:bmad"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.0.0",
+    "js-yaml": "^4.1.0",
+    "tsx": "^4.19.0",
+    "zod": "^3.23.0"
+  }
+}

@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate skills manifest
+        run: npm run build:manifest
+
+      - name: Generate marketplace plugins
+        run: npm run build:plugins
+
+      - name: Generate BMAD artifacts
+        run: npm run build:bmad
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Push to marketplace-ai
+        uses: cpina/github-action-push-to-another-repository@v1.7.4
+        env:
+          SSH_DEPLOY_KEY: ${{ secrets.MARKETPLACE_DEPLOY_KEY }}
+        with:
+          source-directory: 'dist/'
+          destination-github-username: 'AndersHalo'
+          destination-repository-name: 'marketplace-ai'
+          target-branch: main
+          commit-message: 'release: ${{ github.sha }}'

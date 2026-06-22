@@ -1,0 +1,5 @@
+plugins:
+  martech-foundation:
+    description: "Shared web-development conventions for HubSpot, Shopify, and WordPress marketing-template projects."
+    skills:
+      - martech-css
