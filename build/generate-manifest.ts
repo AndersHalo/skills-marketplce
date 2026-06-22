@@ -4,8 +4,11 @@ import yaml from 'js-yaml'
 
 interface SkillMeta {
   skill_name: string
-  skill_version: string
+  skill_version?: string
   platforms: string[]
+  category?: string
+  tags?: string[]
+  skill_description?: string
 }
 
 interface MarketplaceYaml {
@@ -39,7 +42,10 @@ const manifest = {
   generated: new Date().toISOString(),
   skills: skills.map(skill => ({
     name: skill.skill_name,
-    version: skill.skill_version,
+    version: skill.skill_version ?? null,
+    category: skill.category ?? null,
+    tags: skill.tags ?? [],
+    description: skill.skill_description ?? null,
     platforms: skill.platforms,
     plugin: skillToPlugin[skill.skill_name] ?? null,
     status: skillToPlugin[skill.skill_name] ? 'published' : 'unpublished',
