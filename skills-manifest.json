@@ -1,0 +1,24 @@
+{
+  "generated": "2026-06-22T22:11:12.357Z",
+  "skills": [
+    {
+      "name": "martech-css",
+      "version": "1.0.0",
+      "category": "css",
+      "tags": [
+        "css",
+        "bem",
+        "responsive",
+        "typography",
+        "accessibility",
+        "animation"
+      ],
+      "description": "General CSS conventions used across all client web projects regardless of platform (HubSpot, Shopify, WordPress). Covers BEM naming, fluid typography with clamp(), grid/flex layout, button patterns, responsive breakpoint strategy, transitions/animation, and CSS accessibility.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": "martech-foundation",
+      "status": "published"
+    }
+  ]
+}

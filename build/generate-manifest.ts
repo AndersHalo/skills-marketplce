@@ -16,7 +16,6 @@ interface MarketplaceYaml {
 }
 
 const SKILLS_DIR = 'skills'
-const DIST_DIR = 'dist'
 
 const skillDirs = fs.readdirSync(SKILLS_DIR)
 const skills: SkillMeta[] = []
@@ -52,7 +51,6 @@ const manifest = {
   })),
 }
 
-fs.mkdirSync(DIST_DIR, { recursive: true })
-fs.writeFileSync(path.join(DIST_DIR, 'skills-manifest.json'), JSON.stringify(manifest, null, 2))
+fs.writeFileSync('skills-manifest.json', JSON.stringify(manifest, null, 2))
 
 console.log(`manifest: ${manifest.skills.length} skills`)
