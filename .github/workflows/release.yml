@@ -31,7 +31,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Push to marketplace-ai
-        uses: cpina/github-action-push-to-another-repository@v1.7.4
+        uses: cpina/github-action-push-to-another-repository@v1.7.3
         env:
           SSH_DEPLOY_KEY: ${{ secrets.MARKETPLACE_DEPLOY_KEY }}
         with:
