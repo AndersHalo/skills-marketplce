@@ -21,15 +21,18 @@ jobs:
 
       - run: npm ci
 
+      - name: Bump plugin versions
+        run: npm run bump:versions
+
       - name: Generate skills manifest
         run: npm run build:manifest
 
-      - name: Commit skills-manifest.json
+      - name: Commit version bumps and manifest
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add skills-manifest.json
-          git diff --cached --quiet || git commit -m "chore: update skills-manifest.json [skip ci]"
+          git add platforms/marketplace.yaml skills-manifest.json
+          git diff --cached --quiet || git commit -m "chore: bump plugin versions and update manifest [skip ci]"
           git push
 
       - name: Generate marketplace plugins

@@ -1,37 +1,13 @@
 import fs from 'fs'
 import path from 'path'
 import yaml from 'js-yaml'
-import { execSync } from 'child_process'
 
 interface MarketplaceYaml {
-  plugins: Record<string, { description?: string; skills: string[] }>
+  plugins: Record<string, { version?: string; description?: string; skills: string[] }>
 }
 
 const SKILLS_DIR = 'skills'
 const DIST_DIR = 'dist'
-
-const fallbackDate = new Date().toISOString().slice(0, 10)
-const fallbackSha  = execSync('git rev-parse --short HEAD').toString().trim()
-
-function pluginVersion(skillNames: string[]): string {
-  const trackedPaths = [
-    'platforms/marketplace.yaml',
-    ...skillNames.flatMap(s => [`skills/${s}/SKILL.md`, `skills/${s}/.skill-meta.json`]),
-  ].join(' ')
-
-  try {
-    const log = execSync(
-      `git log -1 --format="%ad %h" --date=format:"%Y-%m-%d" -- ${trackedPaths}`
-    ).toString().trim()
-
-    if (log) {
-      const [date, sha] = log.split(' ')
-      return `${date}-${sha}`
-    }
-  } catch {}
-
-  return `${fallbackDate}-${fallbackSha}`
-}
 
 const marketplaceYaml = yaml.load(
   fs.readFileSync('platforms/marketplace.yaml', 'utf-8')
@@ -58,7 +34,7 @@ for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
     console.log(`  + ${skillName}`)
   }
 
-  const version = pluginVersion(plugin.skills)
+  const version = plugin.version ?? '0.0.0'
 
   const pluginJson = {
     schemaVersion: '1.0',
