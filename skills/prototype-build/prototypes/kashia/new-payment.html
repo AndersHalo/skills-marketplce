@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>New Payment — kashia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#064E3B;--bg:#FDFCF7;--surface:#F2EFE2;
+      --text:#1E293B;--text-muted:#626976;--border:#E8EAEB;
+      --warning:#F39D0B;--advance:#6366F1;--error:#EF4444;
+    }
+    body{background:var(--bg);font-family:'Inter',system-ui,sans-serif;padding-top:60px;padding-bottom:32px}
+    input,select,textarea,button{font-family:inherit}
+    label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .field{margin-bottom:18px}
+    .field input,.field select,.field textarea{
+      width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;
+      font-size:16px;color:var(--text);background:#fff;outline:none;-webkit-appearance:none;appearance:none}
+    .field textarea{resize:none;height:80px}
+    #state-panel button{min-height:44px}
+    .flatpickr-input{cursor:pointer}
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast-wrap" style="position:fixed;bottom:24px;left:16px;right:16px;z-index:9500;pointer-events:none"></div>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()" title="State Panel"
+  style="position:fixed;bottom:24px;right:16px;background:#1a1a2e;color:#e5e7eb;border:none;
+    border-radius:50%;width:48px;height:48px;cursor:pointer;z-index:9999;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);touch-action:manipulation">⚙</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel" style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+  background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9998;
+  box-shadow:-4px 0 24px rgba(0,0,0,0.35);padding:16px 14px;font-family:system-ui,sans-serif;box-sizing:border-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:20px;line-height:1;padding:4px;min-height:auto">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — New Payment</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div>
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header style="position:fixed;top:0;left:0;right:0;height:60px;background:var(--bg);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 16px;z-index:900;gap:12px">
+  <button onclick="history.back()" style="background:none;border:none;cursor:pointer;
+    padding:8px;margin-left:-8px;font-size:20px;color:var(--text);min-height:44px;
+    display:flex;align-items:center;touch-action:manipulation">←</button>
+  <h1 style="font-size:18px;font-weight:700;color:var(--text)">New Payment</h1>
+</header>
+
+<!-- FORM -->
+<div style="padding:16px">
+
+  <!-- Service date info (shown for backdated/advanced) -->
+  <div id="date-info-banner" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;line-height:1.5"></div>
+
+  <!-- Duplicate warning -->
+  <div id="duplicate-banner" style="display:none;background:#FFF5E7;border:1px solid #F9B054;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#7A4F06;line-height:1.5">
+    ⚠ A payment for this client on this date already exists. You can still proceed.
+  </div>
+
+  <!-- Client -->
+  <div class="field">
+    <label>Client</label>
+    <select id="f-client" onchange="onClientChange(this.value)">
+      <option value="">Select client…</option>
+      <option value="WI-000">Walk-in Client</option>
+      <option value="AG-001">Ana García · AG-001</option>
+      <option value="LM-002">Luis Martínez · LM-002</option>
+      <option value="SR-003">Sofia Ramírez · SR-003</option>
+      <option value="CV-004">Carlos Vega · CV-004</option>
+      <option value="ML-005">Mariana López · ML-005</option>
+    </select>
+  </div>
+
+  <!-- Amount -->
+  <div class="field">
+    <label>Amount</label>
+    <div style="position:relative">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);
+        font-size:20px;font-weight:700;color:var(--text-muted);font-family:Roboto,system-ui,sans-serif">$</span>
+      <input id="f-amount" type="number" inputmode="decimal" placeholder="0"
+        style="padding-left:28px;font-size:32px;font-weight:700;font-family:Roboto,system-ui,sans-serif;
+          color:var(--text);border:1px solid var(--border);border-radius:10px;width:100%;
+          background:#fff;outline:none;-webkit-appearance:none">
+    </div>
+  </div>
+
+  <!-- Service Date -->
+  <div class="field">
+    <label>Service Date</label>
+    <input id="f-date" type="text" placeholder="Select date…" readonly
+      style="width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;
+        font-size:16px;color:var(--text);background:#fff;cursor:pointer">
+    <div id="entry-date-label" style="display:none;font-size:12px;color:var(--text-muted);margin-top:6px;padding-left:2px"></div>
+  </div>
+
+  <!-- Concept -->
+  <div class="field">
+    <label>Concept</label>
+    <select id="f-concept">
+      <option value="">Select concept…</option>
+      <option value="yoga_class">Yoga class</option>
+      <option value="personal_training">Personal training</option>
+      <option value="drop_in">Drop-in class</option>
+      <option value="workshop">Workshop</option>
+      <option value="monthly_membership">Monthly membership</option>
+    </select>
+  </div>
+
+  <!-- Note -->
+  <div class="field">
+    <label>Note <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+    <textarea id="f-note" placeholder="Add a short note…"></textarea>
+  </div>
+
+  <!-- Buttons -->
+  <button onclick="doSave(false)"
+    style="width:100%;padding:15px;background:var(--primary);color:#fff;border:none;
+      border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:52px;
+      touch-action:manipulation;margin-bottom:12px">Save Payment</button>
+
+  <button onclick="doSave(true)"
+    style="width:100%;padding:14px;background:transparent;color:var(--primary);border:2px solid var(--primary);
+      border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:52px;touch-action:manipulation">
+    Save &amp; Add Another
+  </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.js"></script>
+<script>
+var TODAY = '2026-06-22'
+
+const SCREEN_DATA = {
+  'new_payment_default': {
+    role:'owner', label:'Standard payment recording', frs:['FR1','FR2','FR3','FR4','FR5','FR20','FR41'],
+    data:{ clientId:'', amount:'', date:TODAY, concept:'', note:'', banner:null }
+  },
+  'new_payment_backdated': {
+    role:'owner', label:'Past date — backdated warning', frs:['FR17','FR23','FR24'],
+    data:{ clientId:'AG-001', amount:'350', date:'2026-06-17', concept:'yoga_class', note:'', banner:'backdated' }
+  },
+  'new_payment_advanced': {
+    role:'owner', label:'Future date — advanced warning', frs:['FR29','FR31'],
+    data:{ clientId:'LM-002', amount:'350', date:'2026-06-29', concept:'yoga_class', note:'', banner:'advanced' }
+  },
+  'new_payment_duplicate': {
+    role:'owner', label:'Duplicate client + date warning', frs:['FR16'],
+    data:{ clientId:'SR-003', amount:'600', date:'2026-06-20', concept:'personal_training', note:'', banner:'duplicate' }
+  },
+  'new_payment_save_add': {
+    role:'owner', label:'Save & Add Another flow', frs:['FR15'],
+    data:{ clientId:'CV-004', amount:'', date:TODAY, concept:'yoga_class', note:'', banner:null, showToast:true }
+  }
+}
+const SCENARIOS = [
+  { key:'new_payment_default',   label:'Standard recording',         role:'owner' },
+  { key:'new_payment_backdated', label:'Past date — backdated',      role:'owner' },
+  { key:'new_payment_advanced',  label:'Future date — advanced',     role:'owner' },
+  { key:'new_payment_duplicate', label:'Duplicate date warning',     role:'owner' },
+  { key:'new_payment_save_add',  label:'Save & Add Another flow',    role:'owner' }
+]
+const DEFAULT_PAGE = { owner:'dashboard.html' }
+const ROLE_LABELS  = { owner:'Instructor' }
+
+const params = new URLSearchParams(location.search)
+let S = { scenario: params.get('scenario') || 'new_payment_default', role: null }
+var _sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['new_payment_default']
+S.role = localStorage.getItem('rp_role') || 'owner'
+var panelOpen = false
+var fpInstance = null
+
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var el = document.getElementById('panel-scenarios')
+  if (el) el.innerHTML = SCENARIOS.map(function(sc) {
+    var a = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;min-height:44px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;font-weight:600' : 'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var re = document.getElementById('panel-roles')
+  if (re) re.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var a = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;min-height:36px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;border-color:rgba(255,255,255,0.2);font-weight:600' : 'background:transparent;color:#6b7280;border-color:rgba(255,255,255,0.08)') + '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null,'','?scenario='+key)
+  renderPanel(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role; localStorage.setItem('rp_role', role); renderPanel(); renderScreen()
+}
+
+function switchRole(role) {
+  localStorage.setItem('rp_role', role)
+  location.href = DEFAULT_PAGE[role] || 'dashboard.html'
+}
+
+function getData() {
+  var sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['new_payment_default']
+  return sc ? sc.data || {} : {}
+}
+
+function showToast(msg, type) {
+  var colors = { success:'#064E3B', error:'#991b1b', info:'#1e3a5f' }
+  var wrap = document.getElementById('toast-wrap'); if (!wrap) return
+  var t = document.createElement('div')
+  t.style.cssText = 'background:' + (colors[type]||colors.info) + ';color:#fff;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:500;margin-bottom:8px;transform:translateY(20px);opacity:0;transition:transform 0.3s ease,opacity 0.3s ease;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,0.25)'
+  t.textContent = msg
+  wrap.appendChild(t)
+  requestAnimationFrame(function() { requestAnimationFrame(function() { t.style.transform='translateY(0)'; t.style.opacity='1' }) })
+  setTimeout(function() {
+    t.style.transform='translateY(20px)'; t.style.opacity='0'
+    setTimeout(function() { if (t.parentElement) t.remove() }, 300)
+  }, 3500)
+}
+
+function checkDateBanner(dateStr) {
+  var banner = document.getElementById('date-info-banner')
+  var entryLabel = document.getElementById('entry-date-label')
+  if (!banner || !dateStr) return
+  var today = new Date(TODAY); var sel = new Date(dateStr)
+  if (sel < today) {
+    banner.style.cssText = 'display:block;background:#FFF5E7;border:1px solid #F9B054;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#7A4F06;line-height:1.5'
+    banner.innerHTML = '⚠ You are recording a payment with a past date. This will appear as a <strong>BACKDATED</strong> entry in the ledger.'
+    if (entryLabel) { entryLabel.style.display = 'block'; entryLabel.textContent = 'Entry: ' + TODAY + ' (today)' }
+  } else if (sel > today) {
+    banner.style.cssText = 'display:block;background:#EEF2FF;border:1px solid #A5B4FC;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#4C1D95;line-height:1.5'
+    banner.innerHTML = 'ℹ You are recording an <strong>ADVANCED</strong> payment for future service.'
+    if (entryLabel) { entryLabel.style.display = 'block'; entryLabel.textContent = 'Entry: ' + TODAY + ' (today)' }
+  } else {
+    banner.style.display = 'none'
+    if (entryLabel) entryLabel.style.display = 'none'
+  }
+}
+
+function onClientChange() {}
+
+function renderScreen() {
+  var data = getData()
+  var fClient = document.getElementById('f-client')
+  var fAmount = document.getElementById('f-amount')
+  var fConcept = document.getElementById('f-concept')
+  var fNote = document.getElementById('f-note')
+  var dupBanner = document.getElementById('duplicate-banner')
+  var infoBanner = document.getElementById('date-info-banner')
+  var entryLabel = document.getElementById('entry-date-label')
+
+  if (fClient) fClient.value = data.clientId || ''
+  if (fAmount) fAmount.value = data.amount || ''
+  if (fConcept) fConcept.value = data.concept || ''
+  if (fNote) fNote.value = data.note || ''
+
+  if (fpInstance) fpInstance.setDate(data.date || TODAY)
+
+  if (dupBanner) dupBanner.style.display = data.banner === 'duplicate' ? 'block' : 'none'
+
+  if (data.banner === 'backdated') {
+    if (infoBanner) {
+      infoBanner.style.cssText = 'display:block;background:#FFF5E7;border:1px solid #F9B054;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#7A4F06;line-height:1.5'
+      infoBanner.innerHTML = '⚠ You are recording a payment with a past date. This will appear as a <strong>BACKDATED</strong> entry in the ledger.'
+    }
+    if (entryLabel) { entryLabel.style.display = 'block'; entryLabel.textContent = 'Entry: ' + TODAY + ' (today)' }
+  } else if (data.banner === 'advanced') {
+    if (infoBanner) {
+      infoBanner.style.cssText = 'display:block;background:#EEF2FF;border:1px solid #A5B4FC;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px;color:#4C1D95;line-height:1.5'
+      infoBanner.innerHTML = 'ℹ You are recording an <strong>ADVANCED</strong> payment for future service.'
+    }
+    if (entryLabel) { entryLabel.style.display = 'block'; entryLabel.textContent = 'Entry: ' + TODAY + ' (today)' }
+  } else {
+    if (infoBanner) infoBanner.style.display = 'none'
+    if (entryLabel) entryLabel.style.display = 'none'
+  }
+
+  if (data.showToast) showToast('Payment saved!', 'success')
+}
+
+function doSave(addAnother) {
+  var amount = document.getElementById('f-amount')
+  var client = document.getElementById('f-client')
+  if (!amount || !amount.value || !client || !client.value) {
+    showToast('Please fill in client and amount', 'error'); return
+  }
+  showToast('Payment saved successfully!', 'success')
+  if (addAnother) {
+    setTimeout(function() {
+      if (amount) amount.value = ''
+      var fNote = document.getElementById('f-note')
+      if (fNote) fNote.value = ''
+      if (fpInstance) fpInstance.setDate(TODAY)
+      var infoBanner = document.getElementById('date-info-banner')
+      var entryLabel = document.getElementById('entry-date-label')
+      if (infoBanner) infoBanner.style.display = 'none'
+      if (entryLabel) entryLabel.style.display = 'none'
+    }, 600)
+  } else {
+    setTimeout(function() { location.href = 'ledger.html' }, 1200)
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var data = getData()
+  if (window.flatpickr) {
+    fpInstance = flatpickr('#f-date', {
+      dateFormat: 'Y-m-d',
+      defaultDate: data.date || TODAY,
+      onChange: function(dates, str) { checkDateBanner(str) }
+    })
+  }
+  renderPanel(); renderScreen()
+})
+</script>
+</body>
+</html>

@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resource Profile — Resource Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f7f5f0; --card: #ffffff; --fg: #1a1a1a;
+      --primary: #d95f2b; --secondary: #4a1f1f;
+      --muted: #f0ede8; --muted-fg: #888888; --border: #e5e1da;
+      --success: #3d9a6b; --success-light: #edf7f2;
+      --warning: #c98b0a; --warning-light: #fef9ec;
+      --error: #c0392b; --error-light: #fdf1ec;
+      --info: #2563aa; --info-light: #eff6ff;
+      --sidebar-from: #3b1f4a; --sidebar-to: #4a1f1f;
+      --sidebar-w: 224px; --header-h: 56px; --radius: 0.75rem;
+    }
+    body { background: var(--bg); color: var(--fg); font-family: 'Inter', sans-serif; font-size: 14px; }
+    #sidebar { position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:linear-gradient(180deg,var(--sidebar-from),var(--sidebar-to));display:flex;flex-direction:column;z-index:100;transition:width .2s; }
+    #sidebar.collapsed { width:56px; }
+    .sidebar-logo { padding:20px 18px 14px;font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap;overflow:hidden; }
+    .sidebar-logo span { color:#e87a4a; }
+    #sidebar.collapsed .sidebar-logo-text { display:none; }
+    .sidebar-role { padding:10px 14px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden; }
+    #sidebar.collapsed .sidebar-role { display:none; }
+    #sidebar-nav { flex:1;padding:6px 8px;overflow-y:auto; }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;overflow:hidden;transition:background .15s,color .15s;margin-bottom:2px; }
+    .nav-item:hover { background:rgba(255,255,255,.1);color:#fff; }
+    .nav-item.active { background:rgba(255,255,255,.18);color:#fff;font-weight:600; }
+    .nav-item.locked { cursor:default;opacity:.45; }
+    .nav-item.locked:hover { background:none; }
+    .nav-icon { flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center; }
+    #sidebar.collapsed .nav-label,.nav-lock { }
+    #sidebar.collapsed .nav-label { display:none; }
+    .sidebar-footer { padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden; }
+    .sidebar-footer strong { display:block;color:rgba(255,255,255,.7);font-size:12px;margin-bottom:6px; }
+    #sidebar.collapsed .sidebar-footer-text { display:none; }
+    .sidebar-logout { display:flex;align-items:center;gap:6px;margin-top:6px;color:rgba(255,255,255,.45);cursor:pointer;text-decoration:none;font-size:12px; }
+    .sidebar-logout:hover { color:rgba(255,255,255,.8); }
+    #sidebar.collapsed .sidebar-logout span { display:none; }
+    #header { position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:99;transition:left .2s; }
+    #header.collapsed { left:56px; }
+    .header-toggle { background:none;border:none;cursor:pointer;color:var(--muted-fg);padding:4px;border-radius:4px;display:flex;align-items:center; }
+    .header-toggle:hover { color:var(--fg); }
+    .header-breadcrumb { display:flex;align-items:center;gap:8px;font-size:14px;flex:1; }
+    .breadcrumb-link { color:var(--muted-fg);text-decoration:none;cursor:pointer; }
+    .breadcrumb-link:hover { color:var(--primary); }
+    .breadcrumb-sep { color:var(--border); }
+    .header-current { font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--secondary); }
+    .sync-badges { display:flex;gap:8px; }
+    .sync-badge { display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--success-light);border:1px solid rgba(61,154,107,.2);border-radius:20px;font-size:11px;color:var(--success);font-weight:500; }
+    .sync-dot { width:6px;height:6px;border-radius:50%;background:var(--success); }
+    .header-user { font-size:12px;color:var(--muted-fg); }
+    #main { margin-left:var(--sidebar-w);padding-top:var(--header-h);transition:margin-left .2s;min-height:100vh; }
+    #main.collapsed { margin-left:56px; }
+    .content { padding:24px;max-width:1100px; }
+    /* Profile */
+    .profile-header { display:flex;align-items:flex-start;gap:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px; }
+    .avatar { width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff;flex-shrink:0; }
+    .profile-meta { flex:1; }
+    .profile-name { font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--secondary);margin-bottom:4px; }
+    .profile-role { font-size:13px;color:var(--muted-fg);margin-bottom:10px; }
+    .profile-tags { display:flex;gap:8px;flex-wrap:wrap; }
+    .meta-tag { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;background:var(--muted);color:var(--muted-fg); }
+    .booking-badge { margin-left:auto;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:2px; }
+    .booking-badge .bval { font-size:26px;font-weight:700;line-height:1; }
+    .kpi-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
+    .kpi-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px; }
+    .kpi-label { font-size:11px;color:var(--muted-fg);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px; }
+    .kpi-value { font-size:22px;font-weight:700;line-height:1;margin-bottom:4px; }
+    .kpi-value.warn { color:var(--warning); }
+    .kpi-value.danger { color:var(--error); }
+    .kpi-value.success { color:var(--success); }
+    .kpi-sub { font-size:12px;color:var(--muted-fg); }
+    /* Section card */
+    .section-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden; }
+    .section-header { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--border); }
+    .section-header:hover { background:var(--muted); }
+    .section-title { font-size:13px;font-weight:600; }
+    .section-body { padding:18px; }
+    .chevron { transition:transform .2s; }
+    .chevron.open { transform:rotate(180deg); }
+    /* Tables */
+    table { width:100%;border-collapse:collapse; }
+    th { padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-fg);border-bottom:1px solid var(--border);white-space:nowrap; }
+    td { padding:11px 12px;vertical-align:middle;border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--muted); }
+    .project-link { color:var(--fg);text-decoration:none;font-weight:600; }
+    .project-link:hover { color:var(--primary);text-decoration:underline; }
+    .type-badge { display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500; }
+    .type-tm { background:var(--info-light);color:var(--info); }
+    .type-fp { background:#f3e8ff;color:#7c3aed; }
+    .util-bar-wrap { display:flex;align-items:center;gap:8px; }
+    .util-bar { flex:1;height:5px;background:var(--muted);border-radius:3px;overflow:hidden;min-width:60px; }
+    .util-bar-fill { height:100%;border-radius:3px; }
+    .status-badge { display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600; }
+    .status-idle { background:var(--error-light);color:var(--error); }
+    .status-partial { background:var(--warning-light);color:var(--warning); }
+    .status-healthy { background:var(--success-light);color:var(--success); }
+    .status-over { background:#fce7f3;color:#be185d; }
+    /* Alert */
+    .alert-banner { display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;line-height:1.5; }
+    .alert-error { background:var(--error-light);border:1px solid rgba(192,57,43,.2);color:var(--error); }
+    .alert-warn { background:var(--warning-light);border:1px solid rgba(201,139,10,.2);color:var(--warning); }
+    /* PTO */
+    .pto-item { display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border); }
+    .pto-item:last-child { border-bottom:none; }
+    .pto-date { font-size:12px;font-weight:600;min-width:120px;color:var(--info); }
+    .pto-dur { font-size:12px;color:var(--muted-fg); }
+    /* Empty */
+    .empty-state { padding:40px;text-align:center; }
+    .empty-state-title { font-weight:600;margin-bottom:6px; }
+    .empty-state-sub { font-size:13px;color:var(--muted-fg); }
+  </style>
+</head>
+<body>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()"
+  title="State Panel"
+  style="position:fixed;top:50%;right:0;transform:translateY(-50%);
+         background:#1a1a2e;color:#e5e7eb;border:none;
+         border-radius:8px 0 0 8px;padding:10px 14px;
+         cursor:pointer;z-index:10000;font-size:12px;
+         font-family:system-ui,sans-serif;font-weight:600;letter-spacing:.04em;
+         box-shadow:-2px 0 8px rgba(0,0,0,.3)">⚙ State</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel"
+  style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+         background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9999;
+         box-shadow:-4px 0 24px rgba(0,0,0,.35);padding:16px 14px;
+         font-family:system-ui,sans-serif;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:22px;line-height:1">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Resource Profile</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo"><span class="sidebar-logo-text">Halo.<span>Resource</span></span></div>
+  <div class="sidebar-role" id="sidebar-role-label"></div>
+  <nav id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-text"><strong id="sidebar-email">user@halopowered.com</strong></div>
+    <a href="login.html" class="sidebar-logout">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign out</span>
+    </a>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <a class="breadcrumb-link" href="resource-directory.html">Resource Directory</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="header-current" id="header-name">Resource Profile</span>
+  </div>
+  <div class="sync-badges">
+    <div class="sync-badge"><div class="sync-dot"></div>Deel · 2h ago</div>
+    <div class="sync-badge"><div class="sync-dot"></div>NetSuite · 2h ago</div>
+  </div>
+  <div class="header-user" id="header-user"></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="content"><div id="screen-content"></div></div>
+</div>
+
+<script>
+var PROFILE_DATA = {
+  r1: {
+    name:'Sofia Herrera', role:'Software Engineer', dept:'Engineering',
+    type:'FTE', seniority:'Mid', email:'sofia.h@halopowered.com',
+    alloc:25, billable:20, idleHrs:30, idleCost:4800,
+    status:'truly-idle', statusLabel:'Truly Idle',
+    initials:'SH',
+    assignments: [
+      { project:'CloudWave Migration', client:'CloudWave Inc.', type:'T&M', role:'Backend Dev', alloc:25, start:'Jun 2 2026', end:'Aug 15 2026', status:'active' }
+    ],
+    past: [
+      { project:'Meridian AI Platform', client:'Meridian Labs', type:'Fixed Price', role:'Backend Dev', alloc:80, start:'Jan 10 2026', end:'May 30 2026' },
+      { project:'Northside Fintech Portal', client:'Northside Bank', type:'T&M', role:'API Engineer', alloc:60, start:'Sep 1 2025', end:'Dec 22 2025' }
+    ],
+    pto: [{ dates:'Jul 4–7 2026', duration:'4 days', type:'Holiday' }],
+    conflict: false
+  },
+  r2: {
+    name:'James Whitfield', role:'Delivery Lead', dept:'Project Management',
+    type:'FTE', seniority:'Senior', email:'james.w@halopowered.com',
+    alloc:115, billable:90, idleHrs:0, idleCost:0,
+    status:'over-allocated', statusLabel:'Over-allocated',
+    initials:'JW',
+    conflict: true,
+    conflictMsg: 'Double-booked: Acme Rebrand and Northside Fintech both require 100% Jul 14–21. Allocation exceeds capacity by 15%.',
+    assignments: [
+      { project:'Acme Rebrand Platform', client:'Acme Corp', type:'Fixed Price', role:'Delivery Lead', alloc:60, start:'Apr 1 2026', end:'Aug 31 2026', status:'active' },
+      { project:'Northside Fintech Portal', client:'Northside Bank', type:'T&M', role:'Delivery Lead', alloc:55, start:'May 15 2026', end:'Sep 30 2026', status:'active' },
+      { project:'Greenfield SaaS Build', client:'Greenfield Co.', type:'T&M', role:'Advisory Lead', alloc:0, start:'Jul 1 2026', end:'Jul 31 2026', status:'on-hold' }
+    ],
+    past: [
+      { project:'RealEdge Analytics', client:'RealEdge', type:'T&M', role:'Delivery Lead', alloc:100, start:'Nov 2025', end:'Mar 2026' }
+    ],
+    pto: []
+  },
+  r4: {
+    name:'Marcus Chen', role:'Senior Engineer', dept:'Engineering',
+    type:'FTE', seniority:'Senior', email:'marcus.c@halopowered.com',
+    alloc:85, billable:80, idleHrs:6, idleCost:960,
+    status:'fully-booked', statusLabel:'Healthy',
+    initials:'MC',
+    assignments: [
+      { project:'Acme Rebrand Platform', client:'Acme Corp', type:'Fixed Price', role:'Tech Lead', alloc:50, start:'Mar 10 2026', end:'Aug 31 2026', status:'active' },
+      { project:'CloudWave Migration', client:'CloudWave Inc.', type:'T&M', role:'Senior Engineer', alloc:35, start:'May 1 2026', end:'Aug 15 2026', status:'active' }
+    ],
+    past: [
+      { project:'Meridian AI Platform', client:'Meridian Labs', type:'Fixed Price', role:'Backend Architect', alloc:100, start:'Oct 2025', end:'Mar 2026' }
+    ],
+    pto: [{ dates:'Jul 4–11 2026', duration:'1 week', type:'Vacation' }],
+    conflict: false
+  },
+  r5: {
+    name:'Aisha Okonkwo', role:'Business Analyst', dept:'Strategy & Analytics',
+    type:'FTE', seniority:'Mid', email:'aisha.o@halopowered.com',
+    alloc:0, billable:0, idleHrs:40, idleCost:6400,
+    status:'truly-idle', statusLabel:'Truly Idle',
+    initials:'AO',
+    assignments: [],
+    past: [
+      { project:'Northside Fintech Portal', client:'Northside Bank', type:'T&M', role:'Business Analyst', alloc:80, start:'Jan 2026', end:'May 9 2026' }
+    ],
+    pto: [],
+    conflict: false,
+    emptyNote: 'No active project assignments. Available full-time for new project placement.'
+  },
+  r3: {
+    name:'Priya Nair', role:'UX Designer', dept:'Design',
+    type:'Contractor', seniority:'Senior', email:'priya.n@halopowered.com',
+    alloc:50, billable:45, idleHrs:16, idleCost:2400,
+    status:'partially-allocated', statusLabel:'Under-utilized',
+    initials:'PN',
+    assignments: [
+      { project:'Greenfield SaaS Build', client:'Greenfield Co.', type:'T&M', role:'Lead UX Designer', alloc:50, start:'Jun 1 2026', end:'Oct 31 2026', status:'active' }
+    ],
+    past: [
+      { project:'Acme Rebrand Platform', client:'Acme Corp', type:'Fixed Price', role:'UX Designer', alloc:80, start:'Dec 2025', end:'Mar 2026' }
+    ],
+    pto: [{ dates:'Aug 3–7 2026', duration:'5 days', type:'Vacation' }],
+    conflict: false
+  }
+}
+
+var SCREEN_DATA = {
+  profile_healthy:       { role:'HR',            label:'Marcus Chen — Healthy (85%)',     frs:['FR1.2','FR1.3'],        data:{ resourceId:'r4' } },
+  profile_truly_idle:    { role:'HR',            label:'Sofia Herrera — Truly idle (25%)',frs:['FR1.2','FR1.3','FR2.1'],data:{ resourceId:'r1' } },
+  profile_over_allocated:{ role:'DELIVERY_LEAD', label:'James Whitfield — Over-allocated',frs:['FR1.2','FR4.1'],        data:{ resourceId:'r2' } },
+  profile_partial:       { role:'HR',            label:'Priya Nair — Under-utilized (50%)',frs:['FR1.2','FR1.3'],       data:{ resourceId:'r3' } },
+  profile_no_assignments:{ role:'HR',            label:'Aisha Okonkwo — No assignments',  frs:['FR1.2','FR1.3'],        data:{ resourceId:'r5' } }
+}
+
+var SCENARIOS = [
+  { key:'profile_healthy',        label:'Marcus Chen — Healthy (85%)',       role:'HR' },
+  { key:'profile_truly_idle',     label:'Sofia Herrera — Truly idle (25%)',  role:'HR' },
+  { key:'profile_over_allocated', label:'James Whitfield — Over-allocated',  role:'DELIVERY_LEAD' },
+  { key:'profile_partial',        label:'Priya Nair — Under-utilized (50%)', role:'HR' },
+  { key:'profile_no_assignments', label:'Aisha Okonkwo — No assignments',    role:'HR' }
+]
+
+var ROLE_LABELS = { 'DELIVERY_LEAD':'Delivery Lead', 'HR':'HR / People', 'ADMIN':'Admin' }
+var DEFAULT_PAGE_MAP = { 'DELIVERY_LEAD':'project-composition.html', 'HR':'resource-directory.html', 'ADMIN':'access-control.html' }
+var NAV_CONFIG = {
+  'DELIVERY_LEAD': [
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' },
+    { id:'timesheet', label:'Timesheet', file:'timesheet-compliance.html', icon:'clock' },
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'exec', label:'Executive Dashboard', file:'', icon:'bar-chart', locked:true },
+    { id:'revenue', label:'Revenue Pipeline', file:'', icon:'trending-up', locked:true }
+  ],
+  'HR': [
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' }
+  ],
+  'ADMIN': [{ id:'access-control', label:'Access Control', file:'access-control.html', icon:'shield' }]
+}
+var NAV_ICONS = {
+  'briefcase':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+  'clock':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  'users':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  'bar-chart':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  'trending-up':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  'shield':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+}
+
+var params = new URLSearchParams(location.search)
+var urlResourceId = params.get('id')
+var S = { scenario: params.get('scenario') || 'profile_healthy', role: null }
+var _sc0 = SCREEN_DATA[S.scenario] || SCREEN_DATA['profile_healthy']
+S.role = localStorage.getItem('rp_role') || _sc0.role
+var sidebarCollapsed = false
+
+var panelOpen = false
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var scenEl = document.getElementById('panel-scenarios')
+  if (scenEl) scenEl.innerHTML = SCENARIOS.map(function(sc) {
+    var active = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;font-weight:600':'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var rolesEl = document.getElementById('panel-roles')
+  if (rolesEl) rolesEl.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var active = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;border-color:rgba(255,255,255,.2);font-weight:600':'background:transparent;color:#6b7280;border-color:rgba(255,255,255,.08)') +
+      '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]
+  if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null, '', '?scenario=' + key)
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role; localStorage.setItem('rp_role', role)
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('header').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('main').classList.toggle('collapsed', sidebarCollapsed)
+}
+
+function renderSidebar() {
+  var items = NAV_CONFIG[S.role] || NAV_CONFIG['HR']
+  document.getElementById('sidebar-nav').innerHTML = items.map(function(item) {
+    var icon = NAV_ICONS[item.icon] || ''
+    if (item.locked) return '<div class="nav-item locked"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></div>'
+    return '<a class="nav-item" href="' + item.file + '"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></a>'
+  }).join('')
+  document.getElementById('sidebar-role-label').textContent = ROLE_LABELS[S.role] || S.role
+  var email = localStorage.getItem('rp_email') || (S.role === 'HR' ? 'naomi.adler@halopowered.com' : S.role === 'ADMIN' ? 'admin@halopowered.com' : 'james.whitfield@halopowered.com')
+  document.getElementById('sidebar-email').textContent = email
+  document.getElementById('header-user').textContent = email
+}
+
+function renderScreen() {
+  var sc = SCREEN_DATA[S.scenario]
+  var resourceId = (sc && sc.data && sc.data.resourceId) || urlResourceId || 'r4'
+  var r = PROFILE_DATA[resourceId]
+  if (!r) { document.getElementById('screen-content').innerHTML = '<p style="color:var(--muted-fg);padding:40px">Resource not found.</p>'; return }
+
+  document.getElementById('header-name').textContent = r.name
+
+  var statusClasses = { 'truly-idle':'status-idle','partially-allocated':'status-partial','fully-booked':'status-healthy','over-allocated':'status-over' }
+  var statusColors = { 'truly-idle':'var(--error)','partially-allocated':'var(--warning)','fully-booked':'var(--success)','over-allocated':'#be185d' }
+  var bookingColor = statusColors[r.status] || 'var(--muted-fg)'
+
+  /* conflict banner */
+  var alertHtml = ''
+  if (r.conflict && r.conflictMsg) {
+    alertHtml = '<div class="alert-banner alert-error"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' + r.conflictMsg + '</div>'
+  } else if (r.status === 'truly-idle') {
+    alertHtml = '<div class="alert-banner alert-warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>This resource has been under-utilized for the current period. Estimated weekly idle cost: <strong>$' + r.idleCost.toLocaleString() + '</strong>.</div>'
+  }
+
+  /* profile header */
+  var profileHeader =
+    '<div class="profile-header">' +
+      '<div class="avatar" style="background:linear-gradient(135deg,' + bookingColor + ',var(--secondary))">' + r.initials + '</div>' +
+      '<div class="profile-meta">' +
+        '<div class="profile-name">' + r.name + '</div>' +
+        '<div class="profile-role">' + r.role + ' · ' + r.dept + '</div>' +
+        '<div class="profile-tags">' +
+          '<span class="meta-tag">' + r.seniority + '</span>' +
+          '<span class="meta-tag">' + r.type + '</span>' +
+          '<span class="meta-tag">' + r.email + '</span>' +
+          (r.type !== 'FTE' ? '<span class="meta-tag" style="background:var(--warning-light);color:var(--warning)">External</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="booking-badge" style="background:' + (r.status==='truly-idle'?'var(--error-light)':r.status==='over-allocated'?'#fce7f3':r.status==='fully-booked'?'var(--success-light)':'var(--warning-light)') + ';border:1px solid;border-color:' + bookingColor + '20;border-radius:12px">' +
+        '<div class="bval" style="color:' + bookingColor + '">' + r.alloc + '%</div>' +
+        '<div style="font-size:11px;font-weight:600;color:' + bookingColor + '">' + r.statusLabel + '</div>' +
+      '</div>' +
+    '</div>'
+
+  /* KPI row */
+  var kpiHtml =
+    '<div class="kpi-row">' +
+      '<div class="kpi-card"><div class="kpi-label">Allocation</div><div class="kpi-value ' + (r.alloc>100?'danger':r.alloc>=70?'success':r.alloc>=30?'warn':'danger') + '">' + r.alloc + '%</div><div class="kpi-sub">of contracted hours</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Billable %</div><div class="kpi-value ' + (r.billable>=60?'success':r.billable>=30?'warn':'danger') + '">' + r.billable + '%</div><div class="kpi-sub">of worked hours</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Idle Hours</div><div class="kpi-value ' + (r.idleHrs===0?'':'warn') + '">' + r.idleHrs + 'h</div><div class="kpi-sub">this week</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Idle Cost (est.)</div><div class="kpi-value ' + (r.idleCost===0?'success':r.idleCost>3000?'danger':'warn') + '">' + (r.idleCost>0?'$'+r.idleCost.toLocaleString():'—') + '</div><div class="kpi-sub">this week</div></div>' +
+    '</div>'
+
+  /* current assignments table */
+  var assignRows = r.assignments.length > 0 ? r.assignments.map(function(a) {
+    var typeCls = a.type === 'T&M' ? 'type-tm' : 'type-fp'
+    var barColor = a.alloc >= 80 ? '#3d9a6b' : a.alloc >= 50 ? '#c98b0a' : '#c0392b'
+    var onHold = a.status === 'on-hold'
+    return '<tr' + (onHold?' style="opacity:.6"':'') + '>' +
+      '<td><a class="project-link" href="project-composition.html">' + a.project + '</a><div style="font-size:11px;color:var(--muted-fg)">' + a.client + (onHold?' · <em>On hold</em>':'') + '</div></td>' +
+      '<td><span class="type-badge ' + typeCls + '">' + a.type + '</span></td>' +
+      '<td>' + a.role + '</td>' +
+      '<td><div class="util-bar-wrap"><div class="util-bar"><div class="util-bar-fill" style="width:' + Math.min(a.alloc,100) + '%;background:' + barColor + '"></div></div><span style="font-size:12px;font-weight:600;color:' + barColor + '">' + a.alloc + '%</span></div></td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + a.start + '</td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + a.end + '</td>' +
+    '</tr>'
+  }).join('') : ''
+
+  var currentSection = '<div class="section-card">' +
+    '<div class="section-header" style="cursor:default">' +
+      '<span class="section-title">Active Assignments (' + r.assignments.length + ')</span>' +
+    '</div>' +
+    (r.assignments.length > 0
+      ? '<div class="section-body" style="padding:0"><table><thead><tr><th>Project</th><th>Type</th><th>Role</th><th style="min-width:130px">Allocation</th><th>Start</th><th>End</th></tr></thead><tbody>' + assignRows + '</tbody></table></div>'
+      : '<div class="section-body"><div class="empty-state"><div class="empty-state-title">No active assignments</div><div class="empty-state-sub">' + (r.emptyNote || 'This resource has no current project assignments.') + '</div></div></div>') +
+  '</div>'
+
+  /* past assignments */
+  var pastRows = r.past.length > 0 ? r.past.map(function(a) {
+    var typeCls = a.type === 'T&M' ? 'type-tm' : 'type-fp'
+    return '<tr>' +
+      '<td><a class="project-link" href="project-composition.html">' + a.project + '</a><div style="font-size:11px;color:var(--muted-fg)">' + a.client + '</div></td>' +
+      '<td><span class="type-badge ' + typeCls + '">' + a.type + '</span></td>' +
+      '<td>' + a.role + '</td>' +
+      '<td style="font-size:12px;font-weight:600;color:var(--muted-fg)">' + a.alloc + '%</td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + a.start + '</td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + a.end + '</td>' +
+    '</tr>'
+  }).join('') : ''
+
+  var pastSection = '<div class="section-card">' +
+    '<div class="section-header" onclick="togglePast()" id="past-header">' +
+      '<span class="section-title">Past Assignments (' + r.past.length + ')</span>' +
+      '<svg id="past-chevron" class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+    '</div>' +
+    '<div id="past-body" style="display:none">' +
+      (r.past.length > 0
+        ? '<div class="section-body" style="padding:0"><table><thead><tr><th>Project</th><th>Type</th><th>Role</th><th>Alloc</th><th>Start</th><th>End</th></tr></thead><tbody>' + pastRows + '</tbody></table></div>'
+        : '<div class="section-body"><div class="empty-state"><div class="empty-state-sub">No past assignments recorded.</div></div></div>') +
+    '</div>' +
+  '</div>'
+
+  /* PTO */
+  var ptoSection = ''
+  if (r.pto && r.pto.length > 0) {
+    var ptoItems = r.pto.map(function(p) {
+      return '<div class="pto-item"><div class="pto-date">📅 ' + p.dates + '</div><span>' + p.type + '</span><span class="pto-dur">· ' + p.duration + '</span></div>'
+    }).join('')
+    ptoSection = '<div class="section-card"><div class="section-header" style="cursor:default"><span class="section-title">Upcoming PTO</span></div><div class="section-body">' + ptoItems + '</div></div>'
+  }
+
+  document.getElementById('screen-content').innerHTML = alertHtml + profileHeader + kpiHtml + currentSection + ptoSection + pastSection
+}
+
+function togglePast() {
+  var body = document.getElementById('past-body')
+  var chevron = document.getElementById('past-chevron')
+  var open = body.style.display !== 'none'
+  body.style.display = open ? 'none' : ''
+  if (chevron) chevron.classList.toggle('open', !open)
+}
+
+function renderSidebar() {
+  var items = NAV_CONFIG[S.role] || NAV_CONFIG['HR']
+  document.getElementById('sidebar-nav').innerHTML = items.map(function(item) {
+    var icon = NAV_ICONS[item.icon] || ''
+    if (item.locked) return '<div class="nav-item locked"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></div>'
+    var isActive = item.file === 'resource-directory.html'
+    return '<a class="nav-item' + (isActive?' active':'') + '" href="' + item.file + '"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></a>'
+  }).join('')
+  document.getElementById('sidebar-role-label').textContent = ROLE_LABELS[S.role] || S.role
+  var email = localStorage.getItem('rp_email') || (S.role === 'HR' ? 'naomi.adler@halopowered.com' : S.role === 'ADMIN' ? 'admin@halopowered.com' : 'james.whitfield@halopowered.com')
+  document.getElementById('sidebar-email').textContent = email
+  document.getElementById('header-user').textContent = email
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPanel(); renderSidebar(); renderScreen()
+})
+</script>
+</body>
+</html>

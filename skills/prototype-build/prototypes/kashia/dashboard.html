@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Dashboard — kashia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#064E3B;--primary-hover:#064336;
+      --bg:#FDFCF7;--surface:#F2EFE2;
+      --text:#1E293B;--text-muted:#626976;
+      --border:#E8EAEB;
+      --warning:#F39D0B;--advance:#6366F1;
+      --brand-light:#D3FBE9;
+    }
+    body{background:var(--bg);font-family:'Inter',system-ui,sans-serif;padding-top:60px;padding-bottom:88px}
+    a,button{font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    #state-panel button{min-height:44px}
+  </style>
+</head>
+<body>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()" title="State Panel"
+  style="position:fixed;bottom:80px;right:16px;background:#1a1a2e;color:#e5e7eb;border:none;
+    border-radius:50%;width:48px;height:48px;cursor:pointer;z-index:9999;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4)">⚙</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel" style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+  background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9998;
+  box-shadow:-4px 0 24px rgba(0,0,0,0.35);padding:16px 14px;font-family:system-ui,sans-serif;box-sizing:border-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:20px;line-height:1;padding:4px;min-height:auto">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Dashboard</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div>
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header style="position:fixed;top:0;left:0;right:0;height:60px;background:var(--bg);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 16px;justify-content:space-between;z-index:900">
+  <h1 style="font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.4px">Dashboard</h1>
+  <div onclick="location.href='settings.html'"
+    style="width:36px;height:36px;border-radius:50%;background:var(--primary);
+      display:flex;align-items:center;justify-content:center;color:#fff;
+      font-size:14px;font-weight:700;cursor:pointer">M</div>
+</header>
+
+<!-- SCREEN CONTENT -->
+<div id="screen-content" style="padding:16px"></div>
+
+<!-- FAB -->
+<button onclick="location.href='new-payment.html'"
+  style="position:fixed;bottom:80px;right:16px;width:56px;height:56px;background:var(--primary);
+    color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:800;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(6,78,59,0.4)">+</button>
+
+<!-- BOTTOM NAV -->
+<nav style="position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;
+  border-top:1px solid var(--border);display:flex;z-index:1000">
+  <a href="dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-decoration:none;gap:2px;color:var(--primary);font-size:10px;font-weight:600">
+    <span style="font-size:20px">🏠</span><span>Home</span></a>
+  <a href="ledger.html" style="flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500">
+    <span style="font-size:20px">📋</span><span>Ledger</span></a>
+  <a href="reports.html" style="flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500">
+    <span style="font-size:20px">📊</span><span>Reports</span></a>
+  <a href="management.html" style="flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500">
+    <span style="font-size:20px">👥</span><span>Clients</span></a>
+  <a href="settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500">
+    <span style="font-size:20px">⚙️</span><span>Settings</span></a>
+</nav>
+
+<script>
+const SCREEN_DATA = {
+  'dashboard_loaded': {
+    role:'owner', label:'Active month with payments', frs:['FR36'],
+    data:{
+      totalCollected:12400, periodLabel:'June 2026',
+      recentPayments:[
+        { clientName:'Ana García',    folio:'AG-001', concept:'Yoga class',        amount:350,  date:'Jun 22', status:'backdated' },
+        { clientName:'Sofia Ramírez', folio:'SR-003', concept:'Personal training', amount:600,  date:'Jun 25', status:'advanced' },
+        { clientName:'Luis Martínez', folio:'LM-002', concept:'Yoga class',        amount:350,  date:'Jun 20', status:'current' },
+        { clientName:'Mariana López', folio:'ML-005', concept:'Yoga class',        amount:350,  date:'Jun 12', status:'current' }
+      ]
+    }
+  },
+  'dashboard_empty': {
+    role:'owner', label:'New user — no payments', frs:['FR36'],
+    data:{ totalCollected:0, periodLabel:'June 2026', recentPayments:[] }
+  }
+}
+const SCENARIOS = [
+  { key:'dashboard_loaded', label:'Active month with payments', role:'owner' },
+  { key:'dashboard_empty',  label:'New user — no payments',     role:'owner' }
+]
+const DEFAULT_PAGE = { owner:'dashboard.html' }
+const ROLE_LABELS  = { owner:'Instructor' }
+
+const params = new URLSearchParams(location.search)
+let S = { scenario: params.get('scenario') || 'dashboard_loaded', role: null }
+var _sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['dashboard_loaded']
+S.role = localStorage.getItem('rp_role') || (_sc ? _sc.role : 'owner')
+var panelOpen = false
+
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var el = document.getElementById('panel-scenarios')
+  if (el) el.innerHTML = SCENARIOS.map(function(sc) {
+    var a = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;min-height:44px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;font-weight:600' : 'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var re = document.getElementById('panel-roles')
+  if (re) re.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var a = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;min-height:36px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;border-color:rgba(255,255,255,0.2);font-weight:600' : 'background:transparent;color:#6b7280;border-color:rgba(255,255,255,0.08)') + '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null,'','?scenario='+key)
+  renderPanel(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role; localStorage.setItem('rp_role', role); renderPanel(); renderScreen()
+}
+
+function switchRole(role) {
+  localStorage.setItem('rp_role', role)
+  location.href = DEFAULT_PAGE[role] || 'dashboard.html'
+}
+
+function getData() {
+  var sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['dashboard_loaded']
+  return sc ? sc.data || {} : {}
+}
+
+function fmt(n) { return '$' + Number(n).toLocaleString('en-US') }
+
+function badge(status) {
+  var map = {
+    backdated:{ bg:'#FFF5E7', color:'#A86F08', label:'BACKDATED' },
+    advanced: { bg:'#EEF2FF', color:'#4C1D95', label:'ADVANCED'  },
+    settled:  { bg:'#E8EAEB', color:'#626976', label:'SETTLED'   }
+  }
+  var s = map[status]; if (!s) return ''
+  return ' <span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;background:' + s.bg + ';color:' + s.color + '">' + s.label + '</span>'
+}
+
+function renderScreen() {
+  var data = getData()
+  var el = document.getElementById('screen-content'); if (!el) return
+  var payments = data.recentPayments || []
+
+  var totalCard = '<div style="background:var(--primary);border-radius:16px;padding:20px;margin-bottom:16px;' +
+    'box-shadow:0 4px 16px rgba(6,78,59,0.25)">' +
+    '<p style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:8px">TOTAL COLLECTED</p>' +
+    '<p style="font-size:34px;font-weight:700;color:#fff;font-family:Roboto,system-ui,sans-serif;letter-spacing:-0.5px">' + fmt(data.totalCollected || 0) + '</p>' +
+    '<p style="font-size:13px;color:rgba(255,255,255,0.6);margin-top:6px">' + (data.periodLabel || 'This month') + '</p>' +
+    '</div>'
+
+  if (payments.length === 0) {
+    el.innerHTML = totalCard +
+      '<div style="text-align:center;padding:40px 16px">' +
+      '<div style="font-size:52px;opacity:0.25;margin-bottom:16px">💳</div>' +
+      '<h3 style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">No payments yet</h3>' +
+      '<p style="font-size:14px;color:var(--text-muted);max-width:240px;margin:0 auto;line-height:1.6">Tap + to record your first payment</p>' +
+      '</div>'
+    return
+  }
+
+  var header = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+    '<p style="font-size:14px;font-weight:600;color:var(--text)">Recent payments</p>' +
+    '<a href="ledger.html" style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:500">See all →</a>' +
+    '</div>'
+
+  var items = payments.map(function(p) {
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;' +
+      'padding:14px 16px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:5px">' +
+      '<span style="font-size:15px;font-weight:500;color:var(--text)">' + p.clientName + '</span>' +
+      badge(p.status) +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+      '<span style="background:#D3FBE9;color:#064E3B;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px">' + p.concept + '</span>' +
+      '<span style="font-size:12px;color:var(--text-muted)">' + p.date + '</span>' +
+      '</div></div>' +
+      '<span style="font-size:17px;font-weight:700;color:var(--text);font-family:Roboto,system-ui,sans-serif;margin-left:12px;white-space:nowrap">' + fmt(p.amount) + '</span>' +
+      '</div>'
+  }).join('')
+
+  el.innerHTML = totalCard + header + items
+}
+
+document.addEventListener('DOMContentLoaded', function() { renderPanel(); renderScreen() })
+</script>
+</body>
+</html>

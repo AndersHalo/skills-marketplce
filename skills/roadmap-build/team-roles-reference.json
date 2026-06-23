@@ -1,0 +1,29 @@
+{
+  "aliases": {
+    "tech_lead": ["Tech Lead", "Lead Dev", "Lead Developer", "Lead Engineer"],
+    "solution_architect": ["Architect", "Solution Architect", "System Architect"],
+    "senior_developer": ["Senior Dev", "Senior Developer", "Sr. Developer", "Sr Dev", "Senior Engineer"],
+    "mid_developer": ["Mid Dev", "Mid-level Dev", "Mid-level Developer", "Mid Engineer"],
+    "junior_developer": ["Junior Dev", "Junior Developer", "Jr Dev", "Jr. Developer"],
+    "devops_platform": ["DevOps", "Platform Eng", "Platform Engineer", "Infrastructure", "Infra Engineer"],
+    "sre_cloud": ["SRE", "Site Reliability", "Cloud Engineer", "Cloud Infra"],
+    "security_engineer": ["Security", "Security Engineer", "InfoSec", "AppSec"],
+    "data_engineer": ["Data Engineer", "Data Eng", "ETL Engineer", "Pipeline Engineer"],
+    "qa_manual": ["QA", "QA Engineer", "QA Manual", "Tester", "Manual QA"],
+    "qa_automation": ["QA Automation", "Automation QA", "SDET", "Test Automation Engineer"],
+    "perf_tester": ["Performance", "Load Tester", "Perf Engineer"],
+    "product_owner": ["PO", "Product Owner"],
+    "product_manager": ["PM", "Product Manager", "Product Lead"],
+    "business_analyst": ["BA", "Business Analyst", "Systems Analyst", "Functional Analyst"],
+    "ux_designer": ["UX", "UX Designer", "UX Researcher", "UX/UI"],
+    "ui_designer": ["UI", "UI Designer", "Visual Designer", "UI/UX"],
+    "data_analyst": ["Data Analyst", "BI", "BI Developer", "Analytics"],
+    "technical_writer": ["Tech Writer", "Technical Writer", "Documentation"],
+    "scrum_master": ["Scrum Master", "SM"],
+    "agile_coach": ["Agile Coach", "Coach"],
+    "engineering_manager": ["EM", "Engineering Manager", "Dev Manager"]
+  },
+  "reviewer_default": {
+    "yes": ["tech_lead", "senior_developer", "mid_developer", "junior_developer"]
+  }
+}

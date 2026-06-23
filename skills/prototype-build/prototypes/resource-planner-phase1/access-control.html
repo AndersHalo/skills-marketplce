@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Control — Resource Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing:border-box;margin:0;padding:0; }
+    :root {
+      --bg:#f7f5f0;--card:#ffffff;--fg:#1a1a1a;
+      --primary:#d95f2b;--secondary:#4a1f1f;
+      --muted:#f0ede8;--muted-fg:#888888;--border:#e5e1da;
+      --success:#3d9a6b;--success-light:#edf7f2;
+      --warning:#c98b0a;--warning-light:#fef9ec;
+      --error:#c0392b;--error-light:#fdf1ec;
+      --info:#2563aa;--info-light:#eff6ff;
+      --sidebar-from:#3b1f4a;--sidebar-to:#4a1f1f;
+      --sidebar-w:224px;--header-h:56px;--radius:.75rem;
+    }
+    body { background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;font-size:14px; }
+    #sidebar { position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:linear-gradient(180deg,var(--sidebar-from),var(--sidebar-to));display:flex;flex-direction:column;z-index:100;transition:width .2s; }
+    #sidebar.collapsed { width:56px; }
+    .sidebar-logo { padding:20px 18px 14px;font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap;overflow:hidden; }
+    .sidebar-logo span { color:#e87a4a; }
+    #sidebar.collapsed .sidebar-logo-text { display:none; }
+    .sidebar-role { padding:10px 14px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden; }
+    #sidebar.collapsed .sidebar-role { display:none; }
+    #sidebar-nav { flex:1;padding:6px 8px;overflow-y:auto; }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;overflow:hidden;transition:background .15s;margin-bottom:2px; }
+    .nav-item:hover { background:rgba(255,255,255,.1);color:#fff; }
+    .nav-item.active { background:rgba(255,255,255,.18);color:#fff;font-weight:600; }
+    .nav-item.locked { cursor:default;opacity:.45; }
+    .nav-item.locked:hover { background:none; }
+    .nav-icon { flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center; }
+    #sidebar.collapsed .nav-label { display:none; }
+    .sidebar-footer { padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden; }
+    .sidebar-footer strong { display:block;color:rgba(255,255,255,.7);font-size:12px;margin-bottom:6px; }
+    #sidebar.collapsed .sidebar-footer-text { display:none; }
+    .sidebar-logout { display:flex;align-items:center;gap:6px;margin-top:6px;color:rgba(255,255,255,.45);cursor:pointer;text-decoration:none;font-size:12px; }
+    .sidebar-logout:hover { color:rgba(255,255,255,.8); }
+    #sidebar.collapsed .sidebar-logout span { display:none; }
+    #header { position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:99;transition:left .2s; }
+    #header.collapsed { left:56px; }
+    .header-toggle { background:none;border:none;cursor:pointer;color:var(--muted-fg);padding:4px;border-radius:4px;display:flex;align-items:center; }
+    .header-toggle:hover { color:var(--fg); }
+    .header-title { font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--secondary);flex:1; }
+    .sync-badges { display:flex;gap:8px; }
+    .sync-badge { display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--success-light);border:1px solid rgba(61,154,107,.2);border-radius:20px;font-size:11px;color:var(--success);font-weight:500; }
+    .sync-dot { width:6px;height:6px;border-radius:50%;background:var(--success); }
+    .header-user { font-size:12px;color:var(--muted-fg); }
+    #main { margin-left:var(--sidebar-w);padding-top:var(--header-h);transition:margin-left .2s;min-height:100vh; }
+    #main.collapsed { margin-left:56px; }
+    .content { padding:24px;max-width:1200px; }
+    /* role tabs */
+    .role-tabs { display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px; }
+    .role-tab { padding:10px 22px;font-family:inherit;font-size:13px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--muted-fg);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s;white-space:nowrap; }
+    .role-tab:hover { color:var(--fg); }
+    .role-tab.active { color:var(--primary);border-bottom-color:var(--primary);font-weight:600; }
+    /* layout: table + panel side by side */
+    .ac-layout { display:flex;gap:20px;align-items:flex-start; }
+    .ac-table-wrap { flex:1;min-width:0; }
+    .ac-panel { width:320px;flex-shrink:0; }
+    .section-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden; }
+    /* table */
+    table { width:100%;border-collapse:collapse; }
+    th { padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-fg);border-bottom:1px solid var(--border);white-space:nowrap; }
+    td { padding:11px 12px;vertical-align:middle;border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr.selected-row td { background:rgba(217,95,43,.05); }
+    tr:hover td { background:var(--muted);cursor:pointer; }
+    .user-name { font-weight:600;font-size:13px; }
+    .user-email { font-size:11px;color:var(--muted-fg);margin-top:2px; }
+    .status-chip { display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600; }
+    .status-active { background:var(--success-light);color:var(--success); }
+    .status-inactive { background:var(--muted);color:var(--muted-fg); }
+    .edit-btn { padding:5px 12px;font-size:11px;border:1px solid var(--border);border-radius:5px;background:var(--card);cursor:pointer;font-family:inherit; }
+    .edit-btn:hover { background:var(--muted); }
+    .edit-btn.active { background:var(--primary);color:#fff;border-color:var(--primary); }
+    /* override panel */
+    .panel-header { padding:16px 18px;border-bottom:1px solid var(--border); }
+    .panel-title { font-weight:700;font-size:15px;color:var(--secondary);margin-bottom:4px; }
+    .panel-sub { font-size:12px;color:var(--muted-fg); }
+    .panel-body { padding:18px; }
+    .panel-user { display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border); }
+    .panel-avatar { width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0; }
+    .panel-user-name { font-weight:600;font-size:13px; }
+    .panel-user-role { font-size:11px;color:var(--muted-fg); }
+    /* toggle row */
+    .toggle-row { display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border); }
+    .toggle-row:last-of-type { border-bottom:none; }
+    .toggle-label { font-size:13px;flex:1; }
+    .toggle-label-sub { font-size:11px;color:var(--muted-fg);margin-top:2px; }
+    .toggle-ceiling { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-fg);margin-left:8px;padding:2px 6px;background:var(--muted);border-radius:3px; }
+    /* toggle switch */
+    .toggle-switch { position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none; }
+    .toggle-switch input { opacity:0;width:0;height:0;position:absolute; }
+    .toggle-track { width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0; }
+    .toggle-track::after { content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15); }
+    .toggle-switch input:checked + .toggle-track { background:var(--success); }
+    .toggle-switch input:checked + .toggle-track::after { left:18px; }
+    .toggle-switch.disabled { opacity:.4;cursor:not-allowed; }
+    .toggle-switch.disabled .toggle-track { background:var(--muted); }
+    /* save button */
+    .panel-footer { padding:14px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px; }
+    .btn-save { padding:9px 20px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s; }
+    .btn-save:hover { background:#c24f1e; }
+    .btn-save:disabled { background:var(--border);color:var(--muted-fg);cursor:not-allowed; }
+    .btn-cancel { padding:9px 16px;background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;cursor:pointer; }
+    .btn-cancel:hover { background:var(--muted); }
+    .save-notice { font-size:11px;color:var(--success);font-weight:500;display:flex;align-items:center;gap:5px;margin-right:auto; }
+    /* ceiling info */
+    .ceiling-notice { display:flex;gap:8px;align-items:flex-start;padding:10px 12px;background:var(--muted);border-radius:7px;margin-bottom:14px;font-size:12px;color:var(--muted-fg);line-height:1.5; }
+    /* restricted */
+    .restricted-msg { padding:60px 24px;text-align:center; }
+    .restricted-msg p { color:var(--muted-fg);font-size:13px;line-height:1.6;margin:0; }
+    /* empty panel */
+    .panel-empty { padding:40px 18px;text-align:center;color:var(--muted-fg); }
+    .panel-empty-title { font-weight:600;font-size:14px;margin-bottom:8px;color:var(--fg); }
+    .panel-empty-sub { font-size:12px;line-height:1.6; }
+  </style>
+</head>
+<body>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()"
+  title="State Panel"
+  style="position:fixed;top:50%;right:0;transform:translateY(-50%);
+         background:#1a1a2e;color:#e5e7eb;border:none;
+         border-radius:8px 0 0 8px;padding:10px 14px;
+         cursor:pointer;z-index:10000;font-size:12px;
+         font-family:system-ui,sans-serif;font-weight:600;letter-spacing:.04em;
+         box-shadow:-2px 0 8px rgba(0,0,0,.3)">⚙ State</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel"
+  style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+         background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9999;
+         box-shadow:-4px 0 24px rgba(0,0,0,.35);padding:16px 14px;
+         font-family:system-ui,sans-serif;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:22px;line-height:1">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Access Control</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo"><span class="sidebar-logo-text">Halo.<span>Resource</span></span></div>
+  <div class="sidebar-role" id="sidebar-role-label"></div>
+  <nav id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-text"><strong id="sidebar-email">admin@halopowered.com</strong></div>
+    <a href="login.html" class="sidebar-logout">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign out</span>
+    </a>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-title">Access Control</div>
+  <div class="sync-badges">
+    <div class="sync-badge"><div class="sync-dot"></div>Deel · 2h ago</div>
+    <div class="sync-badge"><div class="sync-dot"></div>NetSuite · 2h ago</div>
+  </div>
+  <div class="header-user" id="header-user"></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="content"><div id="screen-content"></div></div>
+</div>
+
+<script>
+/* ── USERS DATA ── */
+var USERS_BY_ROLE = {
+  'Delivery Lead': [
+    { id:'u1', name:'James Whitfield',  email:'james.w@halopowered.com',  initials:'JW', status:'active',   scope:'Acme Rebrand, Northside Fintech, CloudWave', overrides:{ timesheet:true, directory:true, projectDetail:true, execDash:false, revPipeline:false } },
+    { id:'u2', name:'Thomas Richter',   email:'thomas.r@halopowered.com', initials:'TR', status:'active',   scope:'CloudWave Migration',                         overrides:{ timesheet:true, directory:true, projectDetail:true, execDash:false, revPipeline:false } },
+    { id:'u3', name:'Devon Park',       email:'devon.p@halopowered.com',  initials:'DP', status:'active',   scope:'Meridian AI Platform',                        overrides:{ timesheet:true, directory:false, projectDetail:true, execDash:false, revPipeline:false } },
+    { id:'u4', name:'Rachel Torres',    email:'rachel.t@halopowered.com', initials:'RT', status:'inactive', scope:'(none)',                                       overrides:{ timesheet:false, directory:false, projectDetail:false, execDash:false, revPipeline:false } }
+  ],
+  'HR': [
+    { id:'u5', name:'Naomi Adler',      email:'naomi.a@halopowered.com',  initials:'NA', status:'active', scope:'Full org',      overrides:{ directory:true, projectRead:true } },
+    { id:'u6', name:'Sara Obi',         email:'sara.o@halopowered.com',   initials:'SO', status:'active', scope:'Full org',      overrides:{ directory:true, projectRead:false } }
+  ],
+  'Content Manager': [
+    { id:'u7', name:'(TBD)',            email:'',                          initials:'?',  status:'inactive', scope:'(none)', overrides:{} }
+  ],
+  'Staffing': [
+    { id:'u8', name:'(TBD)',            email:'',                          initials:'?',  status:'inactive', scope:'(none)', overrides:{} }
+  ],
+  'Finance': [
+    { id:'u9', name:'(TBD)',            email:'',                          initials:'?',  status:'inactive', scope:'(none)', overrides:{} }
+  ],
+  'Executive': [
+    { id:'u10', name:'(TBD)',           email:'',                          initials:'?',  status:'inactive', scope:'(none)', overrides:{} }
+  ]
+}
+
+var ROLE_PERMISSIONS = {
+  'Delivery Lead': [
+    { key:'timesheet',     label:'Timesheet Access',     sub:'View & manage team timesheets',     ceiling:false, default:true },
+    { key:'directory',     label:'Resource Directory',   sub:'View resources in scoped projects', ceiling:false, default:true },
+    { key:'projectDetail', label:'Project Detail',       sub:'Full financial KPIs + team composition', ceiling:false, default:true },
+    { key:'execDash',      label:'Executive Dashboard',  sub:'Org-wide revenue & pipeline',       ceiling:true,  default:false },
+    { key:'revPipeline',   label:'Revenue Pipeline',     sub:'Sales pipeline & SOW data',         ceiling:true,  default:false }
+  ],
+  'HR': [
+    { key:'directory',     label:'Resource Directory',   sub:'View full org directory',           ceiling:false, default:true },
+    { key:'projectRead',   label:'Project Read Access',  sub:'View project names & team comp',    ceiling:false, default:true }
+  ]
+}
+
+var SCREEN_DATA = {
+  ac_admin_dl_tab:   { role:'ADMIN', label:'Admin — Delivery Lead tab',  frs:['ADMIN-1','ADMIN-2'],       data:{ tab:'Delivery Lead', selectedUserId:null } },
+  ac_admin_editing:  { role:'ADMIN', label:'Admin — Override panel open',frs:['ADMIN-2','ADMIN-3'],       data:{ tab:'Delivery Lead', selectedUserId:'u3' } },
+  ac_admin_hr_tab:   { role:'ADMIN', label:'Admin — HR tab',             frs:['ADMIN-1'],                 data:{ tab:'HR',            selectedUserId:null } }
+}
+
+var SCENARIOS = [
+  { key:'ac_admin_dl_tab',  label:'Admin — Delivery Lead tab',  role:'ADMIN' },
+  { key:'ac_admin_editing', label:'Admin — Override panel open',role:'ADMIN' },
+  { key:'ac_admin_hr_tab',  label:'Admin — HR tab',             role:'ADMIN' }
+]
+
+var ROLE_LABELS = { 'DELIVERY_LEAD':'Delivery Lead', 'HR':'HR / People', 'ADMIN':'Admin' }
+var DEFAULT_PAGE_MAP = { 'DELIVERY_LEAD':'project-composition.html', 'HR':'resource-directory.html', 'ADMIN':'access-control.html' }
+var NAV_CONFIG = {
+  'DELIVERY_LEAD': [
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' },
+    { id:'timesheet', label:'Timesheet', file:'timesheet-compliance.html', icon:'clock' },
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'exec', label:'Executive Dashboard', file:'', icon:'bar-chart', locked:true },
+    { id:'revenue', label:'Revenue Pipeline', file:'', icon:'trending-up', locked:true }
+  ],
+  'HR': [
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' }
+  ],
+  'ADMIN': [{ id:'access-control', label:'Access Control', file:'access-control.html', icon:'shield' }]
+}
+var NAV_ICONS = {
+  'briefcase':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+  'clock':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  'users':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  'bar-chart':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  'trending-up':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  'shield':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+}
+
+var params = new URLSearchParams(location.search)
+var S = { scenario: params.get('scenario') || 'ac_admin_dl_tab', role: null }
+var _sc0 = SCREEN_DATA[S.scenario] || SCREEN_DATA['ac_admin_dl_tab']
+S.role = localStorage.getItem('rp_role') || _sc0.role
+var sidebarCollapsed = false
+var _viewState = {}
+var _pendingChanges = {}
+var _savedIds = {}
+
+var panelOpen = false
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var scenEl = document.getElementById('panel-scenarios')
+  if (scenEl) scenEl.innerHTML = SCENARIOS.map(function(sc) {
+    var active = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;font-weight:600':'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var rolesEl = document.getElementById('panel-roles')
+  if (rolesEl) rolesEl.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var active = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;border-color:rgba(255,255,255,.2);font-weight:600':'background:transparent;color:#6b7280;border-color:rgba(255,255,255,.08)') +
+      '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null, '', '?scenario=' + key)
+  _viewState[key] = Object.assign({}, sc.data)
+  _pendingChanges = {}
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role; localStorage.setItem('rp_role', role)
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function getVS() {
+  var sc = SCREEN_DATA[S.scenario]
+  if (!_viewState[S.scenario]) _viewState[S.scenario] = Object.assign({}, sc ? sc.data : { tab:'Delivery Lead', selectedUserId:null })
+  return _viewState[S.scenario]
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('header').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('main').classList.toggle('collapsed', sidebarCollapsed)
+}
+
+function renderSidebar() {
+  var items = NAV_CONFIG[S.role] || NAV_CONFIG['ADMIN']
+  document.getElementById('sidebar-nav').innerHTML = items.map(function(item) {
+    var icon = NAV_ICONS[item.icon] || ''
+    if (item.locked) return '<div class="nav-item locked"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></div>'
+    var isActive = item.file === 'access-control.html'
+    return '<a class="nav-item' + (isActive?' active':'') + '" href="' + item.file + '"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></a>'
+  }).join('')
+  document.getElementById('sidebar-role-label').textContent = ROLE_LABELS[S.role] || S.role
+  var email = localStorage.getItem('rp_email') || (S.role === 'HR' ? 'naomi.adler@halopowered.com' : 'admin@halopowered.com')
+  document.getElementById('sidebar-email').textContent = email
+  document.getElementById('header-user').textContent = email
+}
+
+function renderScreen() {
+  var vs = getVS()
+  var el = document.getElementById('screen-content')
+  if (!el) return
+
+  if (S.role !== 'ADMIN') {
+    el.innerHTML = '<div class="restricted-msg"><p>This screen is restricted to Admin. Use the <strong>⚙ State</strong> panel to switch scenarios.</p></div>'
+    return
+  }
+
+  var ROLE_TABS = ['Delivery Lead', 'HR', 'Content Manager', 'Staffing', 'Finance', 'Executive']
+  var tabsHtml = '<div class="role-tabs">' +
+    ROLE_TABS.map(function(t) {
+      var users = USERS_BY_ROLE[t] || []
+      var activeCount = users.filter(function(u){ return u.status === 'active' }).length
+      return '<button class="role-tab' + (vs.tab === t ? ' active' : '') + '" onclick="switchRoleTab(\'' + t + '\')">' +
+        t + ' <span style="font-size:10px;opacity:.7">(' + activeCount + ')</span>' +
+      '</button>'
+    }).join('') +
+  '</div>'
+
+  var users = USERS_BY_ROLE[vs.tab] || []
+  var selectedUser = vs.selectedUserId ? users.filter(function(u){ return u.id === vs.selectedUserId })[0] : null
+
+  var tableRows = users.map(function(u) {
+    var isSelected = u.id === vs.selectedUserId
+    var statusCls = u.status === 'active' ? 'status-active' : 'status-inactive'
+    var isTbd = u.name === '(TBD)'
+    return '<tr class="' + (isSelected ? 'selected-row' : '') + '" onclick="selectUser(\'' + u.id + '\')">' +
+      '<td><div class="user-name" style="' + (isTbd?'color:var(--muted-fg)':'') + '">' + u.name + '</div>' +
+        (u.email ? '<div class="user-email">' + u.email + '</div>' : '') +
+      '</td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + (u.scope || '—') + '</td>' +
+      '<td><span class="status-chip ' + statusCls + '">' + u.status + '</span></td>' +
+      '<td><button class="edit-btn' + (isSelected?' active':'') + '" onclick="event.stopPropagation();selectUser(\'' + u.id + '\')">' + (isSelected ? 'Editing ▸' : 'Edit') + '</button></td>' +
+    '</tr>'
+  }).join('')
+
+  var tableHtml =
+    '<div class="section-card">' +
+      '<div class="table-wrap"><table>' +
+        '<thead><tr><th>User</th><th>Scope</th><th>Status</th><th></th></tr></thead>' +
+        '<tbody>' + tableRows + '</tbody>' +
+      '</table></div>' +
+    '</div>'
+
+  var panelHtml = buildOverridePanel(selectedUser, vs.tab)
+
+  el.innerHTML = tabsHtml + '<div class="ac-layout"><div class="ac-table-wrap">' + tableHtml + '</div><div class="ac-panel">' + panelHtml + '</div></div>'
+
+  /* re-wire toggle switches */
+  if (selectedUser) {
+    var perms = ROLE_PERMISSIONS[vs.tab] || []
+    perms.forEach(function(p) {
+      var input = document.getElementById('toggle-' + p.key)
+      if (input) {
+        input.addEventListener('change', function() {
+          if (!_pendingChanges[selectedUser.id]) _pendingChanges[selectedUser.id] = {}
+          _pendingChanges[selectedUser.id][p.key] = input.checked
+          updateSaveBtn(selectedUser.id)
+        })
+      }
+    })
+  }
+}
+
+function buildOverridePanel(user, roleTab) {
+  if (!user) {
+    return '<div class="section-card"><div class="panel-empty">' +
+      '<div class="panel-empty-title">No user selected</div>' +
+      '<div class="panel-empty-sub">Click a user row to open the permission override panel.</div>' +
+    '</div></div>'
+  }
+  var perms = ROLE_PERMISSIONS[roleTab] || []
+  var overrides = Object.assign({}, user.overrides, _pendingChanges[user.id] || {})
+  var isSaved = _savedIds[user.id]
+  var hasPending = _pendingChanges[user.id] && Object.keys(_pendingChanges[user.id]).length > 0
+
+  var toggleRows = perms.map(function(p) {
+    var checked = overrides[p.key] !== undefined ? overrides[p.key] : p.default
+    var disabled = p.ceiling
+    return '<div class="toggle-row">' +
+      '<div style="flex:1"><div class="toggle-label">' + p.label + (p.ceiling ? '<span class="toggle-ceiling">Ceiling</span>' : '') + '</div>' +
+      '<div class="toggle-label-sub">' + p.sub + '</div></div>' +
+      '<label class="toggle-switch' + (disabled?' disabled':'') + '">' +
+        '<input type="checkbox" id="toggle-' + p.key + '"' + (checked?' checked':'') + (disabled?' disabled':'') + '>' +
+        '<span class="toggle-track"></span>' +
+      '</label>' +
+    '</div>'
+  }).join('')
+
+  var ceilingNotice = '<div class="ceiling-notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+    'Permissions marked <strong>Ceiling</strong> cannot be granted at this role level. Only higher role assignments can unlock them.</div>'
+
+  return '<div class="section-card">' +
+    '<div class="panel-header"><div class="panel-title">Permission Override</div><div class="panel-sub">Adjusts this user\'s access within their assigned role ceiling.</div></div>' +
+    '<div class="panel-body">' +
+      '<div class="panel-user">' +
+        '<div class="panel-avatar">' + user.initials + '</div>' +
+        '<div><div class="panel-user-name">' + user.name + '</div><div class="panel-user-role">' + roleTab + ' · ' + user.email + '</div></div>' +
+      '</div>' +
+      ceilingNotice +
+      toggleRows +
+    '</div>' +
+    '<div class="panel-footer">' +
+      (isSaved && !hasPending ? '<div class="save-notice"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Saved</div>' : '') +
+      '<button class="btn-cancel" onclick="cancelEdit()">Cancel</button>' +
+      '<button class="btn-save" id="save-btn-' + user.id + '" onclick="saveOverride(\'' + user.id + '\')" ' + (!hasPending?'disabled':'') + '>Save changes</button>' +
+    '</div>' +
+  '</div>'
+}
+
+function updateSaveBtn(userId) {
+  var btn = document.getElementById('save-btn-' + userId)
+  if (btn) {
+    var hasPending = _pendingChanges[userId] && Object.keys(_pendingChanges[userId]).length > 0
+    btn.disabled = !hasPending
+  }
+}
+
+function selectUser(userId) {
+  var vs = getVS()
+  vs.selectedUserId = userId
+  _pendingChanges = {}
+  renderScreen()
+}
+
+function cancelEdit() {
+  var vs = getVS()
+  vs.selectedUserId = null
+  _pendingChanges = {}
+  renderScreen()
+}
+
+function saveOverride(userId) {
+  var vs = getVS()
+  var users = USERS_BY_ROLE[vs.tab] || []
+  var user = users.filter(function(u){ return u.id === userId })[0]
+  if (user && _pendingChanges[userId]) {
+    Object.assign(user.overrides, _pendingChanges[userId])
+  }
+  _pendingChanges = {}
+  _savedIds[userId] = true
+  renderScreen()
+}
+
+function switchRoleTab(tab) {
+  var vs = getVS()
+  vs.tab = tab; vs.selectedUserId = null
+  _pendingChanges = {}
+  renderScreen()
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPanel(); renderSidebar(); renderScreen()
+})
+</script>
+</body>
+</html>

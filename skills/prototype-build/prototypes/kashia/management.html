@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Management — kashia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#064E3B;--bg:#FDFCF7;--surface:#F2EFE2;
+      --text:#1E293B;--text-muted:#626976;--border:#E8EAEB;
+      --warning:#F39D0B;
+    }
+    body{background:var(--bg);font-family:'Inter',system-ui,sans-serif;padding-top:116px;padding-bottom:88px}
+    a,button{font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    #state-panel button{min-height:44px}
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast-wrap" style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9500;pointer-events:none"></div>
+
+<!-- BOTTOM SHEET BACKDROP -->
+<div id="sheet-backdrop" onclick="closeSheet()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:7999"></div>
+
+<!-- CLIENT DETAIL BOTTOM SHEET -->
+<div id="bottom-sheet" style="position:fixed;left:0;right:0;bottom:0;background:#fff;
+  border-radius:20px 20px 0 0;z-index:8000;max-height:80vh;overflow-y:auto;
+  overscroll-behavior:contain;transform:translateY(100%);
+  transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);padding:0 20px 40px;box-sizing:border-box">
+  <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:12px auto 16px"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h3 id="sheet-name" style="font-size:17px;font-weight:700;color:var(--text)"></h3>
+    <button onclick="closeSheet()" style="background:none;border:none;font-size:22px;color:var(--text-muted);cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <div id="sheet-body"></div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+    <button id="sheet-profile-btn" onclick="goToProfile()"
+      style="padding:14px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:50px;width:100%">View Profile</button>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeSheet();showToast('Edit client opened','info')"
+        style="flex:1;padding:13px;background:var(--surface);color:var(--text);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:50px">Edit</button>
+      <button id="sheet-delete-btn" onclick="confirmDelete()"
+        style="flex:1;padding:13px;background:#FDE1E1;color:#6B1414;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;min-height:50px">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CLIENT BOTTOM SHEET -->
+<div id="new-client-sheet" style="position:fixed;left:0;right:0;bottom:0;background:#fff;
+  border-radius:20px 20px 0 0;z-index:8001;max-height:90vh;overflow-y:auto;
+  overscroll-behavior:contain;transform:translateY(100%);
+  transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);padding:0 20px 40px;box-sizing:border-box">
+  <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:12px auto 16px"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <h3 style="font-size:17px;font-weight:700;color:var(--text)">New Client</h3>
+    <button onclick="closeNewClient()" style="background:none;border:none;font-size:22px;color:var(--text-muted);cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+  <div style="margin-bottom:16px">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">Name</label>
+    <input id="nc-name" type="text" placeholder="Client name" style="width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;color:var(--text);background:var(--bg);outline:none">
+  </div>
+  <div style="margin-bottom:16px">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">Folio / Member ID</label>
+    <div style="display:flex;gap:8px">
+      <input id="nc-folio" type="text" placeholder="e.g. JD-007" style="flex:1;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;color:var(--text);background:var(--bg);outline:none">
+      <button onclick="genFolio()" style="padding:13px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--primary);white-space:nowrap;min-height:50px">Auto</button>
+    </div>
+    <div id="folio-error" style="display:none;font-size:12px;color:#EF4444;margin-top:4px"></div>
+  </div>
+  <div style="margin-bottom:24px">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px">Phone <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+    <input id="nc-phone" type="tel" placeholder="+52 55 0000 0000" style="width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:10px;font-size:16px;color:var(--text);background:var(--bg);outline:none">
+  </div>
+  <button onclick="saveNewClient()"
+    style="width:100%;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;min-height:52px">Save Client</button>
+</div>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()" title="State Panel"
+  style="position:fixed;bottom:80px;right:16px;background:#1a1a2e;color:#e5e7eb;border:none;
+    border-radius:50%;width:48px;height:48px;cursor:pointer;z-index:9999;font-size:18px;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.4)">⚙</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel" style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+  background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9998;
+  box-shadow:-4px 0 24px rgba(0,0,0,0.35);padding:16px 14px;font-family:system-ui,sans-serif;box-sizing:border-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:20px;line-height:1;padding:4px;min-height:auto">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Management</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div>
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header style="position:fixed;top:0;left:0;right:0;background:var(--bg);border-bottom:1px solid var(--border);z-index:900">
+  <div style="height:60px;display:flex;align-items:center;padding:0 16px;justify-content:space-between">
+    <h1 style="font-size:22px;font-weight:700;color:var(--text)">Management</h1>
+    <button onclick="openNewClient()" style="background:none;border:none;cursor:pointer;padding:8px;font-size:14px;font-weight:600;color:var(--primary);min-height:44px">+ Add</button>
+  </div>
+  <!-- Tabs -->
+  <div style="display:flex;border-bottom:1px solid var(--border);padding:0 16px">
+    <button id="tab-clients" onclick="switchTab('clients')"
+      style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;min-height:44px;color:var(--primary);border-bottom:2px solid var(--primary)">Clients</button>
+    <button id="tab-activities" onclick="switchTab('activities')"
+      style="padding:10px 16px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;min-height:44px;color:var(--text-muted);border-bottom:2px solid transparent">Activities</button>
+  </div>
+  <!-- Search -->
+  <div style="padding:8px 16px 10px">
+    <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:0 12px">
+      <span style="font-size:14px;color:var(--text-muted)">🔍</span>
+      <input id="search-input" type="search" placeholder="Search…"
+        oninput="doSearch(this.value)"
+        style="flex:1;padding:10px 0;border:none;background:transparent;font-size:16px;color:var(--text);outline:none">
+    </div>
+  </div>
+</header>
+
+<!-- SCREEN CONTENT -->
+<div id="screen-content" style="padding:0 16px 16px"></div>
+
+<!-- BOTTOM NAV -->
+<nav style="position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:1000">
+  <a href="dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">🏠</span><span>Home</span></a>
+  <a href="ledger.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">📋</span><span>Ledger</span></a>
+  <a href="reports.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">📊</span><span>Reports</span></a>
+  <a href="management.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--primary);font-size:10px;font-weight:600"><span style="font-size:20px">👥</span><span>Clients</span></a>
+  <a href="settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">⚙️</span><span>Settings</span></a>
+</nav>
+
+<script>
+var ALL_CLIENTS = [
+  { id:'WI-000', name:'Walk-in Client', folio:'WI-000', phone:'',                isDefault:true,  memberSince:'Always', initials:'WI', color:'#E8EAEB' },
+  { id:'AG-001', name:'Ana García',     folio:'AG-001', phone:'+52 55 1234 5678', isDefault:false, memberSince:'Jan 2026', initials:'AG', color:'#D3FBE9' },
+  { id:'LM-002', name:'Luis Martínez',  folio:'LM-002', phone:'+52 55 9876 5432', isDefault:false, memberSince:'Feb 2026', initials:'LM', color:'#EEF2FF' },
+  { id:'SR-003', name:'Sofia Ramírez',  folio:'SR-003', phone:'+52 55 5555 7890', isDefault:false, memberSince:'Jan 2026', initials:'SR', color:'#FFF5E7' },
+  { id:'CV-004', name:'Carlos Vega',    folio:'CV-004', phone:'+52 55 4444 1234', isDefault:false, memberSince:'Mar 2026', initials:'CV', color:'#D3FBE9' },
+  { id:'ML-005', name:'Mariana López',  folio:'ML-005', phone:'+52 55 3333 9876', isDefault:false, memberSince:'Apr 2026', initials:'ML', color:'#EEF2FF' }
+]
+var ALL_ACTIVITIES = [
+  { id:'a1', name:'Yoga Class',        emoji:'🧘', participants:12, price:350, bgColor:'#EAF8F4' },
+  { id:'a2', name:'Personal Training', emoji:'💪', participants:5,  price:600, bgColor:'#E6EFE9' },
+  { id:'a3', name:'Workshop',          emoji:'📚', participants:8,  price:450, bgColor:'#EEECEA' }
+]
+
+const SCREEN_DATA = {
+  'management_clients':           { role:'owner', label:'Clients tab — 6 clients',   frs:['FR51','FR58','FR61','FR62'], data:{ tab:'clients',    empty:false } },
+  'management_clients_empty':     { role:'owner', label:'Clients — empty',            frs:['FR57'],                     data:{ tab:'clients',    empty:true  } },
+  'management_activities':        { role:'owner', label:'Activities tab',             frs:[],                           data:{ tab:'activities', empty:false } },
+  'management_activities_empty':  { role:'owner', label:'Activities — empty',         frs:[],                           data:{ tab:'activities', empty:true  } }
+}
+const SCENARIOS = [
+  { key:'management_clients',          label:'Clients — 6 clients',   role:'owner' },
+  { key:'management_clients_empty',    label:'Clients — empty',        role:'owner' },
+  { key:'management_activities',       label:'Activities tab',         role:'owner' },
+  { key:'management_activities_empty', label:'Activities — empty',     role:'owner' }
+]
+const DEFAULT_PAGE = { owner:'dashboard.html' }
+const ROLE_LABELS  = { owner:'Instructor' }
+
+const params = new URLSearchParams(location.search)
+let S = { scenario: params.get('scenario') || 'management_clients', role: null }
+S.role = localStorage.getItem('rp_role') || 'owner'
+var panelOpen = false
+var activeTab = null
+var searchQuery = ''
+var sheetClient = null
+
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var el = document.getElementById('panel-scenarios')
+  if (el) el.innerHTML = SCENARIOS.map(function(sc) {
+    var a = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;min-height:44px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;font-weight:600' : 'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var re = document.getElementById('panel-roles')
+  if (re) re.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var a = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;min-height:36px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;border-color:rgba(255,255,255,0.2);font-weight:600' : 'background:transparent;color:#6b7280;border-color:rgba(255,255,255,0.08)') + '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null,'','?scenario='+key)
+  activeTab = null; searchQuery = ''
+  var si = document.getElementById('search-input'); if(si) si.value = ''
+  renderPanel(); renderScreen()
+}
+
+function overrideRole(role) { S.role = role; localStorage.setItem('rp_role', role); renderPanel(); renderScreen() }
+function switchRole(role) { localStorage.setItem('rp_role', role); location.href = DEFAULT_PAGE[role] || 'dashboard.html' }
+
+function getData() {
+  var sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['management_clients']
+  return sc ? sc.data || {} : {}
+}
+
+function showToast(msg, type) {
+  var colors = { success:'#064E3B', error:'#991b1b', info:'#1e3a5f' }
+  var wrap = document.getElementById('toast-wrap'); if (!wrap) return
+  var t = document.createElement('div')
+  t.style.cssText = 'background:' + (colors[type]||colors.info) + ';color:#fff;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:500;margin-bottom:8px;transform:translateY(20px);opacity:0;transition:transform 0.3s ease,opacity 0.3s ease;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,0.25)'
+  t.textContent = msg
+  wrap.appendChild(t)
+  requestAnimationFrame(function() { requestAnimationFrame(function() { t.style.transform='translateY(0)'; t.style.opacity='1' }) })
+  setTimeout(function() { t.style.transform='translateY(20px)'; t.style.opacity='0'; setTimeout(function() { if(t.parentElement)t.remove() }, 300) }, 3500)
+}
+
+function switchTab(tab) {
+  activeTab = tab
+  var btnC = document.getElementById('tab-clients')
+  var btnA = document.getElementById('tab-activities')
+  if (btnC) { btnC.style.color = tab==='clients' ? 'var(--primary)' : 'var(--text-muted)'; btnC.style.borderBottom = tab==='clients' ? '2px solid var(--primary)' : '2px solid transparent'; btnC.style.fontWeight = tab==='clients' ? '600' : '500' }
+  if (btnA) { btnA.style.color = tab==='activities' ? 'var(--primary)' : 'var(--text-muted)'; btnA.style.borderBottom = tab==='activities' ? '2px solid var(--primary)' : '2px solid transparent'; btnA.style.fontWeight = tab==='activities' ? '600' : '500' }
+  searchQuery = ''; var si = document.getElementById('search-input'); if(si) si.value = ''
+  renderScreen()
+}
+
+function doSearch(val) { searchQuery = val; renderScreen() }
+
+function openSheet(idx) {
+  var data = getData()
+  var tab = activeTab || data.tab || 'clients'
+  var clients = (data.empty && tab === 'clients') ? [ALL_CLIENTS[0]] : ALL_CLIENTS
+  if (searchQuery) clients = clients.filter(function(c) { return c.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1 })
+  sheetClient = clients[idx]; if (!sheetClient) return
+  var c = sheetClient
+  document.getElementById('sheet-name').textContent = c.name
+  var profileBtn = document.getElementById('sheet-profile-btn')
+  var deleteBtn = document.getElementById('sheet-delete-btn')
+  if (profileBtn) profileBtn.style.display = c.isDefault ? 'none' : 'block'
+  if (deleteBtn) { deleteBtn.disabled = c.isDefault; deleteBtn.style.opacity = c.isDefault ? '0.4' : '1'; deleteBtn.style.cursor = c.isDefault ? 'not-allowed' : 'pointer' }
+  document.getElementById('sheet-body').innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+    sheetRow('Folio', '#' + c.folio) +
+    (c.phone ? sheetRow('Phone', c.phone) : '') +
+    sheetRow('Member since', c.memberSince) +
+    (c.isDefault ? '<p style="font-size:12px;color:#A86F08;background:#FFF5E7;padding:8px 12px;border-radius:8px;margin-top:4px">Protected: Walk-in Client cannot be deleted</p>' : '') +
+    '</div>'
+  document.getElementById('sheet-backdrop').style.display = 'block'
+  document.getElementById('bottom-sheet').style.transform = 'translateY(0)'
+  document.body.style.overflow = 'hidden'
+}
+
+function sheetRow(label, val) {
+  return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">' +
+    '<span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em">' + label + '</span>' +
+    '<span style="font-size:14px;color:var(--text);font-weight:500">' + val + '</span></div>'
+}
+
+function goToProfile() {
+  closeSheet()
+  setTimeout(function() { location.href = 'client-profile.html' }, 300)
+}
+
+function closeSheet() {
+  document.getElementById('bottom-sheet').style.transform = 'translateY(100%)'
+  document.getElementById('sheet-backdrop').style.display = 'none'
+  document.body.style.overflow = ''
+}
+
+function confirmDelete() {
+  if (sheetClient && sheetClient.isDefault) return
+  closeSheet()
+  setTimeout(function() { showToast('Client deleted', 'success') }, 400)
+}
+
+function openNewClient() {
+  document.getElementById('new-client-sheet').style.transform = 'translateY(0)'
+  document.getElementById('sheet-backdrop').style.display = 'block'
+  document.body.style.overflow = 'hidden'
+  var nc = document.getElementById('nc-name'); if(nc) nc.value = ''
+  genFolio()
+}
+
+function closeNewClient() {
+  document.getElementById('new-client-sheet').style.transform = 'translateY(100%)'
+  document.getElementById('sheet-backdrop').style.display = 'none'
+  document.body.style.overflow = ''
+}
+
+function genFolio() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  var prefix = chars[Math.floor(Math.random()*chars.length)] + chars[Math.floor(Math.random()*chars.length)]
+  var num = String(Math.floor(Math.random()*900)+100)
+  var f = document.getElementById('nc-folio'); if(f) f.value = prefix + '-' + num
+}
+
+function saveNewClient() {
+  var n = document.getElementById('nc-name'); var fo = document.getElementById('nc-folio')
+  if (!n || !n.value.trim()) { showToast('Please enter a name','error'); return }
+  closeNewClient()
+  showToast('Client saved!', 'success')
+}
+
+function renderScreen() {
+  var data = getData()
+  var tab = activeTab || data.tab || 'clients'
+  var el = document.getElementById('screen-content'); if (!el) return
+
+  if (tab === 'activities') {
+    var acts = data.empty ? [] : ALL_ACTIVITIES
+    if (acts.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:48px 16px">' +
+        '<div style="font-size:48px;opacity:0.25;margin-bottom:16px">🏃</div>' +
+        '<h3 style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:8px">No activities yet</h3>' +
+        '<p style="font-size:14px;color:var(--text-muted);max-width:240px;margin:0 auto">Tap + Add to create your first activity</p>' +
+        '</div>'
+      return
+    }
+    el.innerHTML = '<p style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">' + acts.length + ' ACTIVITIES</p>' +
+      acts.map(function(a) {
+        return '<div style="background:' + a.bgColor + ';border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;min-height:64px">' +
+          '<div style="display:flex;align-items:center;gap:12px">' +
+          '<div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;font-size:22px">' + a.emoji + '</div>' +
+          '<div><p style="font-size:15px;font-weight:500;color:var(--text)">' + a.name + '</p>' +
+          '<p style="font-size:12px;color:var(--text-muted)">' + a.participants + ' participants · $' + a.price + '/session</p></div>' +
+          '</div>' +
+          '<span style="font-size:18px;color:var(--text-muted)">›</span>' +
+          '</div>'
+      }).join('')
+    return
+  }
+
+  var clients = data.empty ? [ALL_CLIENTS[0]] : ALL_CLIENTS
+  if (searchQuery) clients = clients.filter(function(c) { return c.name.toLowerCase().indexOf(searchQuery.toLowerCase()) !== -1 })
+
+  if (clients.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 16px">' +
+      '<p style="font-size:15px;color:var(--text-muted)">No clients match "' + searchQuery + '"</p>' +
+      '</div>'
+    return
+  }
+
+  el.innerHTML = '<p style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">' + clients.length + ' CLIENT' + (clients.length!==1?'S':'') + '</p>' +
+    clients.map(function(c, i) {
+      var border = c.isDefault ? '2px solid #F9B054' : '1px solid var(--border)'
+      return '<div onclick="openSheet(' + i + ')" style="background:#fff;border:' + border + ';border-radius:14px;' +
+        'padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;' +
+        'cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-height:64px">' +
+        '<div style="display:flex;align-items:center;gap:12px">' +
+        '<div style="width:44px;height:44px;border-radius:50%;background:' + c.color + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--primary);flex-shrink:0">' + c.initials + '</div>' +
+        '<div>' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+        '<p style="font-size:15px;font-weight:500;color:var(--text)">' + c.name + '</p>' +
+        (c.isDefault ? '<span style="font-size:10px;font-weight:600;background:#064E3B;color:#fff;padding:2px 7px;border-radius:8px">Default</span>' : '') +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:3px">' +
+        '<span style="font-size:11px;font-weight:600;color:#626976;background:#E8EAEB;padding:2px 7px;border-radius:8px">#' + c.folio + '</span>' +
+        (c.phone ? '<span style="font-size:12px;color:var(--text-muted)">' + c.phone + '</span>' : '') +
+        '</div>' +
+        '<p style="font-size:11px;color:var(--text-muted);margin-top:2px">Member since ' + c.memberSince + '</p>' +
+        '</div></div>' +
+        '<span style="font-size:18px;color:var(--text-muted)">›</span>' +
+        '</div>'
+    }).join('')
+}
+
+document.addEventListener('DOMContentLoaded', function() { renderPanel(); renderScreen() })
+</script>
+</body>
+</html>

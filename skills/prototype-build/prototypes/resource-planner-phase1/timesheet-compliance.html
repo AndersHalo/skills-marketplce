@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timesheet Compliance — Resource Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing:border-box;margin:0;padding:0; }
+    :root {
+      --bg:#f7f5f0;--card:#ffffff;--fg:#1a1a1a;
+      --primary:#d95f2b;--secondary:#4a1f1f;
+      --muted:#f0ede8;--muted-fg:#888888;--border:#e5e1da;
+      --success:#3d9a6b;--success-light:#edf7f2;
+      --warning:#c98b0a;--warning-light:#fef9ec;
+      --error:#c0392b;--error-light:#fdf1ec;
+      --info:#2563aa;--info-light:#eff6ff;
+      --sidebar-from:#3b1f4a;--sidebar-to:#4a1f1f;
+      --sidebar-w:224px;--header-h:56px;--radius:.75rem;
+    }
+    body { background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;font-size:14px; }
+    #sidebar { position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:linear-gradient(180deg,var(--sidebar-from),var(--sidebar-to));display:flex;flex-direction:column;z-index:100;transition:width .2s; }
+    #sidebar.collapsed { width:56px; }
+    .sidebar-logo { padding:20px 18px 14px;font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap;overflow:hidden; }
+    .sidebar-logo span { color:#e87a4a; }
+    #sidebar.collapsed .sidebar-logo-text { display:none; }
+    .sidebar-role { padding:10px 14px 6px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden; }
+    #sidebar.collapsed .sidebar-role { display:none; }
+    #sidebar-nav { flex:1;padding:6px 8px;overflow-y:auto; }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;color:rgba(255,255,255,.65);text-decoration:none;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;overflow:hidden;transition:background .15s;margin-bottom:2px; }
+    .nav-item:hover { background:rgba(255,255,255,.1);color:#fff; }
+    .nav-item.active { background:rgba(255,255,255,.18);color:#fff;font-weight:600; }
+    .nav-item.locked { cursor:default;opacity:.45; }
+    .nav-item.locked:hover { background:none; }
+    .nav-icon { flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center; }
+    #sidebar.collapsed .nav-label { display:none; }
+    .sidebar-footer { padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden; }
+    .sidebar-footer strong { display:block;color:rgba(255,255,255,.7);font-size:12px;margin-bottom:6px; }
+    #sidebar.collapsed .sidebar-footer-text { display:none; }
+    .sidebar-logout { display:flex;align-items:center;gap:6px;margin-top:6px;color:rgba(255,255,255,.45);cursor:pointer;text-decoration:none;font-size:12px; }
+    .sidebar-logout:hover { color:rgba(255,255,255,.8); }
+    #sidebar.collapsed .sidebar-logout span { display:none; }
+    #header { position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--header-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;z-index:99;transition:left .2s; }
+    #header.collapsed { left:56px; }
+    .header-toggle { background:none;border:none;cursor:pointer;color:var(--muted-fg);padding:4px;border-radius:4px;display:flex;align-items:center; }
+    .header-toggle:hover { color:var(--fg); }
+    .header-breadcrumb { display:flex;align-items:center;gap:8px;flex:1; }
+    .breadcrumb-link { color:var(--muted-fg);cursor:pointer;font-size:14px; }
+    .breadcrumb-link:hover { color:var(--primary); }
+    .header-title { font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--secondary); }
+    .sync-badges { display:flex;gap:8px; }
+    .sync-badge { display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--success-light);border:1px solid rgba(61,154,107,.2);border-radius:20px;font-size:11px;color:var(--success);font-weight:500; }
+    .sync-dot { width:6px;height:6px;border-radius:50%;background:var(--success); }
+    .header-user { font-size:12px;color:var(--muted-fg); }
+    #main { margin-left:var(--sidebar-w);padding-top:var(--header-h);transition:margin-left .2s;min-height:100vh; }
+    #main.collapsed { margin-left:56px; }
+    .content { padding:24px;max-width:1100px; }
+    /* kpi row */
+    .kpi-row { display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px; }
+    .kpi-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px; }
+    .kpi-label { font-size:11px;color:var(--muted-fg);font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px; }
+    .kpi-value { font-size:24px;font-weight:700;line-height:1;margin-bottom:4px; }
+    .kpi-value.warn { color:var(--warning); }
+    .kpi-value.danger { color:var(--error); }
+    .kpi-value.success { color:var(--success); }
+    .kpi-sub { font-size:12px;color:var(--muted-fg); }
+    /* project group */
+    .project-group { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden; }
+    .project-group-header { display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--border); }
+    .project-group-header:hover { background:var(--muted); }
+    .group-title { font-weight:600;font-size:14px; }
+    .group-meta { font-size:12px;color:var(--muted-fg);margin-top:2px; }
+    .compliance-bar { display:flex;align-items:center;gap:8px; }
+    .c-bar { width:120px;height:6px;background:var(--muted);border-radius:3px;overflow:hidden; }
+    .c-fill { height:100%;border-radius:3px; }
+    /* member rows */
+    .member-row { display:flex;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border); }
+    .member-row:last-child { border-bottom:none; }
+    .member-row:hover { background:var(--muted); }
+    .member-avatar { width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-right:12px; }
+    .member-name { font-weight:600;font-size:13px;min-width:160px; }
+    .member-role { font-size:11px;color:var(--muted-fg);flex:1; }
+    .week-statuses { display:flex;gap:4px;align-items:center;margin-left:auto; }
+    .week-cell { width:34px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;cursor:default; }
+    .week-approved  { background:var(--success-light);color:var(--success); }
+    .week-submitted { background:var(--info-light);color:var(--info); }
+    .week-missing   { background:var(--error-light);color:var(--error); }
+    .week-rejected  { background:var(--warning-light);color:var(--warning); }
+    .week-na        { background:var(--muted);color:var(--muted-fg); }
+    .view-detail-btn { margin-left:12px;padding:4px 10px;font-size:11px;border:1px solid var(--border);border-radius:5px;background:var(--card);cursor:pointer;font-family:inherit;white-space:nowrap; }
+    .view-detail-btn:hover { background:var(--muted); }
+    .week-labels { display:flex;gap:4px;margin-left:auto;padding-right:12px; }
+    .week-label { width:34px;text-align:center;font-size:10px;color:var(--muted-fg);font-weight:500; }
+    /* detail view */
+    .detail-header { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px; }
+    .detail-avatar { width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0; }
+    .detail-name { font-family:'Playfair Display',serif;font-weight:700;font-size:20px;color:var(--secondary); }
+    .detail-role { font-size:12px;color:var(--muted-fg);margin-top:3px; }
+    .back-btn { margin-left:auto;display:flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;font-family:inherit;font-size:12px;font-weight:500; }
+    .back-btn:hover { background:var(--muted); }
+    /* detail table */
+    .detail-table-wrap { background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden; }
+    table { width:100%;border-collapse:collapse; }
+    th { padding:10px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted-fg);border-bottom:1px solid var(--border);white-space:nowrap; }
+    td { padding:11px 12px;vertical-align:middle;border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--muted); }
+    .status-chip { display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600; }
+    .status-approved  { background:var(--success-light);color:var(--success); }
+    .status-submitted { background:var(--info-light);color:var(--info); }
+    .status-missing   { background:var(--error-light);color:var(--error); }
+    .status-rejected  { background:var(--warning-light);color:var(--warning); }
+    /* legend */
+    .legend { display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:12px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--muted-fg); }
+    .legend-item { display:flex;align-items:center;gap:5px; }
+    .legend-dot { width:10px;height:10px;border-radius:2px;flex-shrink:0; }
+    /* restricted */
+    .restricted-msg { padding:60px 24px;text-align:center; }
+    .restricted-msg p { color:var(--muted-fg);font-size:13px;line-height:1.6;margin:0; }
+  </style>
+</head>
+<body>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()"
+  title="State Panel"
+  style="position:fixed;top:50%;right:0;transform:translateY(-50%);
+         background:#1a1a2e;color:#e5e7eb;border:none;
+         border-radius:8px 0 0 8px;padding:10px 14px;
+         cursor:pointer;z-index:10000;font-size:12px;
+         font-family:system-ui,sans-serif;font-weight:600;letter-spacing:.04em;
+         box-shadow:-2px 0 8px rgba(0,0,0,.3)">⚙ State</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel"
+  style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+         background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9999;
+         box-shadow:-4px 0 24px rgba(0,0,0,.35);padding:16px 14px;
+         font-family:system-ui,sans-serif;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:22px;line-height:1">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Timesheet</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-logo"><span class="sidebar-logo-text">Halo.<span>Resource</span></span></div>
+  <div class="sidebar-role" id="sidebar-role-label"></div>
+  <nav id="sidebar-nav"></nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-footer-text"><strong id="sidebar-email">james.whitfield@halopowered.com</strong></div>
+    <a href="login.html" class="sidebar-logout">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign out</span>
+    </a>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <button class="header-toggle" onclick="toggleSidebar()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span class="header-title" id="header-title">Timesheet Compliance</span>
+  </div>
+  <div class="sync-badges">
+    <div class="sync-badge"><div class="sync-dot"></div>Deel · 2h ago</div>
+    <div class="sync-badge"><div class="sync-dot"></div>NetSuite · 2h ago</div>
+  </div>
+  <div class="header-user" id="header-user"></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="content"><div id="screen-content"></div></div>
+</div>
+
+<script>
+/* ── DATA ── */
+var WEEKS = ['W Jun 2', 'W Jun 9', 'W Jun 16', 'W Jun 23']
+var WEEK_ABBR = ['Jun 2', 'Jun 9', 'Jun 16', 'Jun 23']
+
+var TS_DATA = {
+  compliant: {
+    projects: [
+      {
+        id:'p1', name:'Acme Rebrand Platform', client:'Acme Corp',
+        compliant:5, total:6,
+        members: [
+          { id:'r2', name:'James Whitfield', role:'Delivery Lead', initials:'JW', weeks:['approved','approved','approved','approved'] },
+          { id:'r4', name:'Marcus Chen',     role:'Tech Lead',     initials:'MC', weeks:['approved','approved','approved','approved'] },
+          { id:'r3', name:'Priya Nair',      role:'UX Designer',   initials:'PN', weeks:['approved','approved','approved','submitted'] },
+          { id:'r9', name:'Camille Bouchard',role:'Frontend Eng',  initials:'CB', weeks:['approved','approved','approved','approved'] },
+          { id:'r11',name:'Naomi Adler',     role:'QA Engineer',   initials:'NA', weeks:['approved','approved','submitted','submitted'] },
+          { id:'r12',name:'Oscar Villanueva',role:'DevOps',         initials:'OV', weeks:['approved','approved','approved','approved'] }
+        ]
+      },
+      {
+        id:'p3', name:'CloudWave Migration', client:'CloudWave Inc.',
+        compliant:3, total:3,
+        members: [
+          { id:'r6', name:'Thomas Richter',role:'Project Mgr',  initials:'TR', weeks:['approved','approved','approved','approved'] },
+          { id:'r1', name:'Sofia Herrera', role:'Backend Dev',  initials:'SH', weeks:['approved','approved','approved','approved'] },
+          { id:'r4', name:'Marcus Chen',   role:'Sr. Engineer', initials:'MC', weeks:['approved','approved','approved','approved'] }
+        ]
+      }
+    ],
+    summary: { compliant:8, partial:2, missing:0, total:13 }
+  },
+  non_compliant: {
+    projects: [
+      {
+        id:'p2', name:'Northside Fintech Portal', client:'Northside Bank',
+        compliant:2, total:4,
+        members: [
+          { id:'r2', name:'James Whitfield',role:'Delivery Lead',initials:'JW', weeks:['approved','approved','missing','missing'] },
+          { id:'r7', name:'Leila Farooq',   role:'Data Engineer',initials:'LF', weeks:['approved','submitted','rejected','missing'] },
+          { id:'r6', name:'Thomas Richter', role:'Project Mgr',  initials:'TR', weeks:['approved','approved','approved','submitted'] },
+          { id:'r1', name:'Sofia Herrera',  role:'Backend Dev',  initials:'SH', weeks:['approved','missing','missing','missing'] }
+        ]
+      },
+      {
+        id:'p1', name:'Acme Rebrand Platform', client:'Acme Corp',
+        compliant:4, total:6,
+        members: [
+          { id:'r2', name:'James Whitfield',role:'Delivery Lead',initials:'JW', weeks:['approved','approved','missing','na'] },
+          { id:'r4', name:'Marcus Chen',    role:'Tech Lead',    initials:'MC', weeks:['approved','approved','approved','approved'] },
+          { id:'r3', name:'Priya Nair',     role:'UX Designer',  initials:'PN', weeks:['approved','submitted','submitted','missing'] },
+          { id:'r9', name:'Camille Bouchard',role:'Frontend Eng',initials:'CB', weeks:['approved','approved','approved','submitted'] },
+          { id:'r11',name:'Naomi Adler',    role:'QA Engineer',  initials:'NA', weeks:['approved','approved','rejected','missing'] },
+          { id:'r12',name:'Oscar Villanueva',role:'DevOps',      initials:'OV', weeks:['approved','approved','approved','approved'] }
+        ]
+      }
+    ],
+    summary: { compliant:6, partial:4, missing:3, total:13 }
+  }
+}
+
+var PERSON_DETAIL = {
+  r7: {
+    name:'Leila Farooq', role:'Data Engineer', dept:'Engineering', initials:'LF',
+    entries: [
+      { week:'Jun 2',  project:'Northside Fintech Portal', hours:26, expected:26, status:'approved',  notes:'' },
+      { week:'Jun 9',  project:'Northside Fintech Portal', hours:24, expected:26, status:'submitted', notes:'Submitted 2 days late' },
+      { week:'Jun 16', project:'Northside Fintech Portal', hours:20, expected:26, status:'rejected',  notes:'Hours do not match project billing code' },
+      { week:'Jun 23', project:'Northside Fintech Portal', hours:0,  expected:26, status:'missing',   notes:'Timesheet not submitted' }
+    ],
+    kpis: { submitted:2, approved:1, missing:1, rejected:1 }
+  }
+}
+
+var SCREEN_DATA = {
+  ts_compliant:     { role:'DELIVERY_LEAD', label:'DL — All projects compliant',    frs:['FR5.1','FR5.2'],       data:{ view:'list', dataset:'compliant' } },
+  ts_non_compliant: { role:'DELIVERY_LEAD', label:'DL — Non-compliant timesheets',  frs:['FR5.1','FR5.2','FR5.3'],data:{ view:'list', dataset:'non_compliant' } },
+  ts_person_detail: { role:'DELIVERY_LEAD', label:'DL — Per-person detail (Leila)', frs:['FR5.3'],              data:{ view:'detail', personId:'r7', dataset:'non_compliant' } }
+}
+
+var SCENARIOS = [
+  { key:'ts_compliant',     label:'DL — All projects compliant',   role:'DELIVERY_LEAD' },
+  { key:'ts_non_compliant', label:'DL — Non-compliant timesheets', role:'DELIVERY_LEAD' },
+  { key:'ts_person_detail', label:'DL — Per-person detail (Leila)',role:'DELIVERY_LEAD' }
+]
+
+var ROLE_LABELS = { 'DELIVERY_LEAD':'Delivery Lead', 'HR':'HR / People', 'ADMIN':'Admin' }
+var DEFAULT_PAGE_MAP = { 'DELIVERY_LEAD':'project-composition.html', 'HR':'resource-directory.html', 'ADMIN':'access-control.html' }
+var NAV_CONFIG = {
+  'DELIVERY_LEAD': [
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' },
+    { id:'timesheet', label:'Timesheet', file:'timesheet-compliance.html', icon:'clock' },
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'exec', label:'Executive Dashboard', file:'', icon:'bar-chart', locked:true },
+    { id:'revenue', label:'Revenue Pipeline', file:'', icon:'trending-up', locked:true }
+  ],
+  'HR': [
+    { id:'directory', label:'Resource Directory', file:'resource-directory.html', icon:'users' },
+    { id:'projects', label:'Projects', file:'project-composition.html', icon:'briefcase' }
+  ],
+  'ADMIN': [{ id:'access-control', label:'Access Control', file:'access-control.html', icon:'shield' }]
+}
+var NAV_ICONS = {
+  'briefcase':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+  'clock':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  'users':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  'bar-chart':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  'trending-up':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  'shield':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'
+}
+
+var params = new URLSearchParams(location.search)
+var S = { scenario: params.get('scenario') || 'ts_compliant', role: null }
+var _sc0 = SCREEN_DATA[S.scenario] || SCREEN_DATA['ts_compliant']
+S.role = localStorage.getItem('rp_role') || _sc0.role
+var sidebarCollapsed = false
+var _viewState = {}
+
+var panelOpen = false
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var scenEl = document.getElementById('panel-scenarios')
+  if (scenEl) scenEl.innerHTML = SCENARIOS.map(function(sc) {
+    var active = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;font-weight:600':'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var rolesEl = document.getElementById('panel-roles')
+  if (rolesEl) rolesEl.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var active = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;' +
+      (active?'background:rgba(255,255,255,.15);color:#f9fafb;border-color:rgba(255,255,255,.2);font-weight:600':'background:transparent;color:#6b7280;border-color:rgba(255,255,255,.08)') +
+      '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null, '', '?scenario=' + key)
+  _viewState[key] = Object.assign({}, sc.data)
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role; localStorage.setItem('rp_role', role)
+  renderPanel(); renderSidebar(); renderScreen()
+}
+
+function getVS() {
+  var sc = SCREEN_DATA[S.scenario]
+  if (!_viewState[S.scenario]) _viewState[S.scenario] = Object.assign({}, sc ? sc.data : {view:'list',dataset:'compliant'})
+  return _viewState[S.scenario]
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed
+  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('header').classList.toggle('collapsed', sidebarCollapsed)
+  document.getElementById('main').classList.toggle('collapsed', sidebarCollapsed)
+}
+
+function renderSidebar() {
+  var items = NAV_CONFIG[S.role] || NAV_CONFIG['DELIVERY_LEAD']
+  document.getElementById('sidebar-nav').innerHTML = items.map(function(item) {
+    var icon = NAV_ICONS[item.icon] || ''
+    if (item.locked) return '<div class="nav-item locked"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></div>'
+    var isActive = item.file === 'timesheet-compliance.html'
+    return '<a class="nav-item' + (isActive?' active':'') + '" href="' + item.file + '"><span class="nav-icon">' + icon + '</span><span class="nav-label">' + item.label + '</span></a>'
+  }).join('')
+  document.getElementById('sidebar-role-label').textContent = ROLE_LABELS[S.role] || S.role
+  var email = localStorage.getItem('rp_email') || (S.role === 'HR' ? 'naomi.adler@halopowered.com' : S.role === 'ADMIN' ? 'admin@halopowered.com' : 'james.whitfield@halopowered.com')
+  document.getElementById('sidebar-email').textContent = email
+  document.getElementById('header-user').textContent = email
+}
+
+function renderScreen() {
+  var vs = getVS()
+  var el = document.getElementById('screen-content')
+  if (!el) return
+
+  /* if non-DL role, show restricted */
+  if (S.role !== 'DELIVERY_LEAD') {
+    el.innerHTML = '<div class="restricted-msg"><p style="color:var(--muted-fg);font-size:13px;line-height:1.6;margin:0">This screen is restricted to Delivery Lead. Use the <strong>⚙ State</strong> panel to switch scenarios.</p></div>'
+    return
+  }
+
+  if (vs.view === 'detail') {
+    renderDetailView(vs.personId || 'r7')
+    return
+  }
+  renderListView(vs.dataset || 'compliant')
+}
+
+function renderListView(dataset) {
+  var d = TS_DATA[dataset] || TS_DATA['compliant']
+  var summary = d.summary
+  var el = document.getElementById('screen-content')
+
+  var complianceRate = Math.round(summary.compliant / summary.total * 100)
+  var kpiHtml =
+    '<div class="kpi-row">' +
+      kpiCard('Compliant', summary.compliant + ' / ' + summary.total, complianceRate >= 80 ? 'success' : complianceRate >= 60 ? 'warn' : 'danger') +
+      kpiCard('Submitted (pending)', summary.partial, summary.partial > 0 ? 'warn' : '') +
+      kpiCard('Missing', summary.missing, summary.missing > 0 ? 'danger' : 'success') +
+      kpiCard('Compliance Rate', complianceRate + '%', complianceRate >= 80 ? 'success' : 'danger') +
+    '</div>'
+
+  var weekLabelsHtml = '<div class="week-labels">' + WEEK_ABBR.map(function(w) { return '<span class="week-label">' + w + '</span>' }).join('') + '</div>'
+
+  /* warning if non-compliant data */
+  var alertHtml = ''
+  if (dataset === 'non_compliant') {
+    alertHtml = '<div style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:var(--error-light);border:1px solid rgba(192,57,43,.2);border-radius:8px;font-size:13px;color:var(--error);margin-bottom:16px;line-height:1.5">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+      '<div><strong>3 missing timesheets</strong> across 2 projects. Missing submissions may affect billing accuracy. Follow up with team members.</div>' +
+    '</div>'
+  }
+
+  var projectGroupsHtml = d.projects.map(function(proj) {
+    var compPct = Math.round(proj.compliant / proj.total * 100)
+    var barColor = compPct >= 80 ? '#3d9a6b' : compPct >= 60 ? '#c98b0a' : '#c0392b'
+    var memberRows = proj.members.map(function(m) {
+      var weekCells = m.weeks.map(function(status) {
+        var cls = { 'approved':'week-approved','submitted':'week-submitted','missing':'week-missing','rejected':'week-rejected','na':'week-na' }[status] || 'week-na'
+        var label = { 'approved':'✓','submitted':'⏳','missing':'✗','rejected':'!','na':'—' }[status] || '?'
+        return '<div class="week-cell ' + cls + '" title="' + status + '">' + label + '</div>'
+      }).join('')
+      return '<div class="member-row">' +
+        '<div class="member-avatar">' + m.initials + '</div>' +
+        '<div class="member-name"><a href="resource-profile.html?id=' + m.id + '" style="color:var(--fg);text-decoration:none" onmouseenter="this.style.color=\'var(--primary)\'" onmouseleave="this.style.color=\'var(--fg)\'">' + m.name + '</a></div>' +
+        '<div class="member-role">' + m.role + '</div>' +
+        '<div class="week-statuses">' + weekCells + '</div>' +
+        '<button class="view-detail-btn" onclick="openPersonDetail(\'' + m.id + '\')">Detail</button>' +
+      '</div>'
+    }).join('')
+
+    return '<div class="project-group">' +
+      '<div class="project-group-header" onclick="toggleProjectGroup(\'' + proj.id + '\')">' +
+        '<div>' +
+          '<div class="group-title">' + proj.name + '</div>' +
+          '<div class="group-meta">' + proj.client + ' · ' + proj.members.length + ' members</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:16px">' +
+          weekLabelsHtml +
+          '<div class="compliance-bar"><div class="c-bar"><div class="c-fill" style="width:' + compPct + '%;background:' + barColor + '"></div></div><span style="font-size:12px;font-weight:600;color:' + barColor + '">' + compPct + '%</span></div>' +
+          '<svg id="grp-chev-' + proj.id + '" class="chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</div>' +
+      '</div>' +
+      '<div id="grp-body-' + proj.id + '">' + memberRows + '</div>' +
+      '<div class="legend"><div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>Approved</div><div class="legend-item"><div class="legend-dot" style="background:var(--info)"></div>Submitted</div><div class="legend-item"><div class="legend-dot" style="background:var(--error)"></div>Missing</div><div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>Rejected</div></div>' +
+    '</div>'
+  }).join('')
+
+  el.innerHTML = kpiHtml + alertHtml + projectGroupsHtml
+}
+
+function toggleProjectGroup(id) {
+  var body = document.getElementById('grp-body-' + id)
+  var chev = document.getElementById('grp-chev-' + id)
+  var open = body.style.display !== 'none'
+  body.style.display = open ? 'none' : ''
+  if (chev) chev.classList.toggle('open', !open)
+}
+
+function kpiCard(label, val, cls) {
+  return '<div class="kpi-card"><div class="kpi-label">' + label + '</div><div class="kpi-value ' + cls + '">' + val + '</div></div>'
+}
+
+function openPersonDetail(personId) {
+  var vs = getVS()
+  vs.view = 'detail'; vs.personId = personId
+  renderScreen()
+}
+
+function renderDetailView(personId) {
+  var person = PERSON_DETAIL[personId]
+  var el = document.getElementById('screen-content')
+  if (!person) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted-fg)">No detail data for this person.</div>'
+    return
+  }
+
+  var k = person.kpis
+  var kpiHtml =
+    '<div class="kpi-row">' +
+      kpiCard('Approved', k.approved, 'success') +
+      kpiCard('Submitted', k.submitted, 'warn') +
+      kpiCard('Rejected', k.rejected, k.rejected > 0 ? 'warn' : '') +
+      kpiCard('Missing', k.missing, k.missing > 0 ? 'danger' : '') +
+    '</div>'
+
+  var headerHtml =
+    '<div class="detail-header">' +
+      '<div class="detail-avatar">' + person.initials + '</div>' +
+      '<div>' +
+        '<div class="detail-name">' + person.name + '</div>' +
+        '<div class="detail-role">' + person.role + ' · ' + person.dept + '</div>' +
+      '</div>' +
+      '<button class="back-btn" onclick="backToList()">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>' +
+        'Back to Compliance' +
+      '</button>' +
+    '</div>'
+
+  var rows = person.entries.map(function(e) {
+    var statusCls = { 'approved':'status-approved','submitted':'status-submitted','missing':'status-missing','rejected':'status-rejected' }[e.status] || ''
+    var hoursCls = e.status === 'missing' ? 'style="color:var(--error)"' : e.hours < e.expected ? 'style="color:var(--warning)"' : ''
+    return '<tr>' +
+      '<td style="font-weight:600">' + e.week + '</td>' +
+      '<td>' + e.project + '</td>' +
+      '<td ' + hoursCls + '>' + (e.status === 'missing' ? '—' : e.hours + 'h') + '</td>' +
+      '<td>' + e.expected + 'h</td>' +
+      '<td><span class="status-chip ' + statusCls + '">' + e.status.charAt(0).toUpperCase() + e.status.slice(1) + '</span></td>' +
+      '<td style="font-size:12px;color:var(--muted-fg)">' + (e.notes || '—') + '</td>' +
+    '</tr>'
+  }).join('')
+
+  var tableHtml =
+    '<div class="detail-table-wrap">' +
+      '<table><thead><tr><th>Week</th><th>Project</th><th>Hours Logged</th><th>Expected</th><th>Status</th><th>Notes</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>' +
+    '</div>'
+
+  el.innerHTML = headerHtml + kpiHtml + tableHtml
+}
+
+function backToList() {
+  var vs = getVS()
+  vs.view = 'list'
+  renderScreen()
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPanel(); renderSidebar(); renderScreen()
+})
+
+/* tiny chevron polyfill */
+var chevron = document.createElement('style')
+chevron.textContent = '.chevron.open { transform: rotate(180deg); }'
+document.head.appendChild(chevron)
+</script>
+</body>
+</html>

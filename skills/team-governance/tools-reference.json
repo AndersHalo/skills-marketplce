@@ -1,0 +1,192 @@
+{
+  "tools": {
+    "jira": {
+      "label": "Jira",
+      "default": true,
+      "project_inputs": [
+        {
+          "key": "jira_board_url",
+          "prompt": "Jira project URL",
+          "collection": "required",
+          "extracts": {
+            "jira_workspace": "subdomain of atlassian.net",
+            "jira_project_key": "path segment after /projects/",
+            "jira_board_url": "full URL as provided"
+          }
+        },
+        {
+          "key": "jira_cloud_id",
+          "prompt": "Jira Cloud ID (format: 712020:uuid or hex like 62cc54e9…)",
+          "collection": "optional",
+          "note": "Ask only if not extractable from the URL"
+        }
+      ],
+      "member_inputs": [
+        {
+          "key": "jira_account_id",
+          "prompt": "Jira account ID for {name} (712020:uuid or hex)"
+        }
+      ]
+    },
+    "github": {
+      "label": "GitHub",
+      "default": true,
+      "project_inputs": [
+        {
+          "key": "github_repo_url",
+          "prompt": "GitHub repository URL",
+          "collection": "required",
+          "extracts": {
+            "github_owner": "owner segment",
+            "github_repo": "repo segment",
+            "github_repo_url": "full URL as provided"
+          }
+        }
+      ],
+      "member_inputs": [
+        {
+          "key": "github_username",
+          "prompt": "GitHub username for {name}"
+        }
+      ]
+    },
+    "figma": {
+      "label": "Figma",
+      "default": false,
+      "project_inputs": [
+        {
+          "key": "figma_url",
+          "prompt": "Figma file or team URL",
+          "collection": "required",
+          "extracts": {
+            "figma_file_key": "file key from file/design URL",
+            "figma_file_url": "full URL (file or design URLs only)",
+            "figma_team_id": "team ID from team URL"
+          }
+        },
+        {
+          "key": "figma_team_id",
+          "prompt": "Figma Team ID (visible in the team URL)",
+          "collection": "optional",
+          "note": "Ask only if team URL was not provided and figma_team_id was not extracted"
+        }
+      ],
+      "member_inputs": [
+        {
+          "key": "figma_username",
+          "prompt": "Figma username or email for {name}"
+        }
+      ]
+    },
+    "slack": {
+      "label": "Slack",
+      "default": false,
+      "project_inputs": [
+        {
+          "key": "slack_workspace_url",
+          "prompt": "Slack workspace URL",
+          "collection": "optional",
+          "extracts": {
+            "slack_workspace": "subdomain"
+          }
+        },
+        {
+          "key": "slack_channel",
+          "prompt": "Main project channel name (without #)",
+          "collection": "always_asked"
+        }
+      ],
+      "member_inputs": [
+        {
+          "key": "slack_handle",
+          "prompt": "Slack handle for {name} (without @)"
+        }
+      ]
+    },
+    "confluence": {
+      "label": "Confluence",
+      "default": false,
+      "project_inputs": [
+        {
+          "key": "confluence_url",
+          "prompt": "Confluence space URL",
+          "collection": "required",
+          "extracts": {
+            "confluence_workspace": "subdomain",
+            "confluence_space_key": "path segment after /spaces/"
+          }
+        }
+      ],
+      "member_inputs": [
+        {
+          "key": "confluence_username",
+          "prompt": "Confluence username or email for {name}"
+        }
+      ]
+    },
+    "linear": {
+      "label": "Linear",
+      "default": false,
+      "project_inputs": [
+        {
+          "key": "linear_url",
+          "prompt": "Linear team URL",
+          "collection": "required",
+          "extracts": {
+            "linear_workspace": "workspace slug",
+            "linear_team_id": "team ID segment"
+          }
+        }
+      ],
+      "member_inputs": []
+    },
+    "notion": {
+      "label": "Notion",
+      "default": false,
+      "note": "No URL pattern — always ask directly. Do not attempt URL extraction.",
+      "project_inputs": [
+        {
+          "key": "notion_workspace",
+          "prompt": "Notion workspace name",
+          "collection": "required"
+        }
+      ],
+      "member_inputs": []
+    },
+    "environments": {
+      "label": "Environments",
+      "default": false,
+      "note": "Not a platform account — collects deployment environment URLs.",
+      "project_inputs": [
+        {
+          "key": "staging_url_1",
+          "prompt": "Staging environment URL (primary)",
+          "collection": "required",
+          "extracts": {
+            "env_staging_1_host": "hostname",
+            "env_staging_1_url": "full URL"
+          }
+        },
+        {
+          "key": "staging_url_2",
+          "prompt": "Staging environment URL (secondary)",
+          "collection": "optional",
+          "extracts": {
+            "env_staging_2_host": "hostname",
+            "env_staging_2_url": "full URL"
+          }
+        },
+        {
+          "key": "production_url",
+          "prompt": "Production environment URL",
+          "collection": "required",
+          "extracts": {
+            "env_production_host": "hostname",
+            "env_production_url": "full URL"
+          }
+        }
+      ],
+      "member_inputs": []
+    }
+  }
+}

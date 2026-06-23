@@ -3,3 +3,10 @@ plugins:
     description: "Shared web-development conventions for HubSpot, Shopify, and WordPress marketing-template projects."
     skills:
       - martech-css
+
+  halo-product:
+    description: "Product team toolkit for prototyping, roadmap generation, and team governance."
+    skills:
+      - prototype-build
+      - roadmap-build
+      - team-governance

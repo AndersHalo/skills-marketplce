@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unauthorized — Resource Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f7f5f0; --card: #ffffff; --fg: #1a1a1a;
+      --primary: #d95f2b; --secondary: #4a1f1f;
+      --muted: #f0ede8; --muted-fg: #888888; --border: #e5e1da;
+      --error: #c0392b; --error-light: #fdf1ec;
+      --radius: 0.75rem;
+    }
+    body {
+      background: var(--bg); color: var(--fg);
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .wrap { width: 100%; max-width: 460px; padding: 24px; text-align: center; }
+    .logo { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 24px; color: var(--secondary); margin-bottom: 32px; }
+    .logo span { color: var(--primary); }
+    .icon-wrap { width: 72px; height: 72px; border-radius: 50%; background: var(--error-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 40px 36px;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.06);
+    }
+    .card-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--secondary); margin-bottom: 10px; }
+    .card-body { font-size: 14px; color: var(--muted-fg); line-height: 1.7; margin-bottom: 28px; }
+    .card-body strong { color: var(--fg); }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      padding: 10px 20px; background: var(--primary); color: #fff;
+      border: none; border-radius: 6px; font-family: inherit; font-size: 13px;
+      font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover { background: #c24f1e; }
+    .btn-secondary {
+      padding: 10px 20px; background: var(--card); color: var(--fg);
+      border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px;
+      font-weight: 500; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-secondary:hover { background: var(--muted); }
+    .role-info { margin-top: 24px; padding: 12px 14px; background: var(--muted); border-radius: 8px; font-size: 12px; color: var(--muted-fg); }
+  </style>
+</head>
+<body>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()"
+  title="State Panel"
+  style="position:fixed;top:50%;right:0;transform:translateY(-50%);
+         background:#1a1a2e;color:#e5e7eb;border:none;
+         border-radius:8px 0 0 8px;padding:10px 14px;
+         cursor:pointer;z-index:9999;font-size:12px;
+         font-family:system-ui,sans-serif;font-weight:600;letter-spacing:0.04em;
+         box-shadow:-2px 0 8px rgba(0,0,0,0.3)">⚙ State</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel"
+  style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+         background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9998;
+         box-shadow:-4px 0 24px rgba(0,0,0,0.35);padding:16px 14px;
+         font-family:system-ui,sans-serif;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:22px;line-height:1">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Unauthorized</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- PAGE CONTENT -->
+<div class="wrap">
+  <div class="logo">Halo.<span>Resource</span></div>
+  <div class="card">
+    <div class="icon-wrap">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div id="screen-content"></div>
+  </div>
+</div>
+
+<script>
+var SCREEN_DATA = {
+  unauth_dl_access_control: {
+    role: 'DELIVERY_LEAD',
+    label: 'DL tries Access Control',
+    frs: ['RBAC-1', 'RBAC-2'],
+    data: {
+      attemptedPage: 'Access Control',
+      currentRole: 'Delivery Lead',
+      backPage: 'project-composition.html',
+      backLabel: 'Back to Projects'
+    }
+  }
+}
+
+var SCENARIOS = [
+  { key: 'unauth_dl_access_control', label: 'DL tries Access Control', role: 'DELIVERY_LEAD' }
+]
+
+var ROLE_LABELS = {
+  'DELIVERY_LEAD': 'Delivery Lead',
+  'HR': 'HR / People',
+  'ADMIN': 'Admin'
+}
+
+var DEFAULT_PAGE = {
+  'DELIVERY_LEAD': 'project-composition.html',
+  'HR': 'resource-directory.html',
+  'ADMIN': 'access-control.html'
+}
+
+var params = new URLSearchParams(location.search)
+var S = { scenario: params.get('scenario') || 'unauth_dl_access_control', role: null }
+var _sc0 = SCREEN_DATA[S.scenario] || SCREEN_DATA['unauth_dl_access_control']
+S.role = localStorage.getItem('rp_role') || _sc0.role
+
+var panelOpen = false
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var scenEl = document.getElementById('panel-scenarios')
+  if (scenEl) {
+    scenEl.innerHTML = SCENARIOS.map(function(sc) {
+      var active = sc.key === S.scenario
+      return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;' +
+        (active ? 'background:rgba(255,255,255,0.15);color:#f9fafb;font-weight:600' : 'background:transparent;color:#9ca3af') +
+        '">' + sc.label + '</button>'
+    }).join('')
+  }
+  var rolesEl = document.getElementById('panel-roles')
+  if (rolesEl) {
+    rolesEl.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+      var active = r === S.role
+      return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;' +
+        (active ? 'background:rgba(255,255,255,0.15);color:#f9fafb;border-color:rgba(255,255,255,0.2);font-weight:600' : 'background:transparent;color:#6b7280;border-color:rgba(255,255,255,0.08)') +
+        '">' + ROLE_LABELS[r] + '</button>'
+    }).join('')
+  }
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]
+  if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null, '', '?scenario=' + key)
+  renderPanel(); renderScreen()
+}
+
+function overrideRole(role) {
+  S.role = role
+  localStorage.setItem('rp_role', role)
+  renderPanel(); renderScreen()
+}
+
+function renderScreen() {
+  var sc = SCREEN_DATA[S.scenario]
+  var data = sc ? sc.data : {}
+  var el = document.getElementById('screen-content')
+  if (!el) return
+
+  var backPage = data.backPage || DEFAULT_PAGE[S.role] || 'login.html'
+  var backLabel = data.backLabel || 'Go back'
+
+  el.innerHTML =
+    '<div class="card-title">Access restricted</div>' +
+    '<div class="card-body">You don\'t have permission to view <strong>' + (data.attemptedPage || 'this page') + '</strong>.<br>' +
+    'Your current role is <strong>' + (data.currentRole || ROLE_LABELS[S.role] || S.role) + '</strong>.<br>' +
+    'Contact your administrator if you need access.</div>' +
+    '<div class="actions">' +
+      '<a href="' + backPage + '" class="btn-primary">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>' +
+        backLabel +
+      '</a>' +
+      '<a href="login.html" class="btn-secondary">Sign in as different user</a>' +
+    '</div>' +
+    '<div class="role-info">To request a different access level, contact your NetSuite administrator.</div>'
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderPanel()
+  renderScreen()
+})
+</script>
+</body>
+</html>

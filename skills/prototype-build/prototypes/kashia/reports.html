@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Reports — kashia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --primary:#064E3B;--bg:#FDFCF7;--surface:#F2EFE2;
+      --text:#1E293B;--text-muted:#626976;--border:#E8EAEB;
+      --warning:#F39D0B;--advance:#6366F1;
+    }
+    body{background:var(--bg);font-family:'Inter',system-ui,sans-serif;padding-top:60px;padding-bottom:88px}
+    a,button{font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    #state-panel button{min-height:44px}
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast-wrap" style="position:fixed;bottom:80px;left:16px;right:16px;z-index:9500;pointer-events:none"></div>
+
+<!-- STATE PANEL TOGGLE -->
+<button id="state-panel-toggle" onclick="togglePanel()" title="State Panel"
+  style="position:fixed;bottom:80px;right:16px;background:#1a1a2e;color:#e5e7eb;border:none;
+    border-radius:50%;width:48px;height:48px;cursor:pointer;z-index:9999;font-size:18px;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.4)">⚙</button>
+
+<!-- STATE PANEL -->
+<div id="state-panel" style="display:none;position:fixed;top:0;right:0;width:280px;height:100vh;
+  background:#1a1a2e;color:#e5e7eb;overflow-y:auto;z-index:9998;
+  box-shadow:-4px 0 24px rgba(0,0,0,0.35);padding:16px 14px;font-family:system-ui,sans-serif;box-sizing:border-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-weight:600;font-size:13px;color:#f9fafb">⚙ State Panel</span>
+    <button onclick="togglePanel()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:20px;line-height:1;padding:4px;min-height:auto">×</button>
+  </div>
+  <div style="margin-bottom:20px">
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Scenarios — Reports</p>
+    <div id="panel-scenarios" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div>
+    <p style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600">Role override</p>
+    <div id="panel-roles" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header style="position:fixed;top:0;left:0;right:0;height:60px;background:var(--bg);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 16px;justify-content:space-between;z-index:900">
+  <h1 style="font-size:22px;font-weight:700;color:var(--text)">Reports</h1>
+  <div style="display:flex;gap:8px">
+    <button onclick="showToast('Report shared!','success')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;min-height:36px">Share</button>
+    <button onclick="showToast('Printing to KP-88B…','info')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;min-height:36px">Print</button>
+  </div>
+</header>
+
+<!-- SCREEN CONTENT -->
+<div id="screen-content" style="padding:16px"></div>
+
+<!-- FAB -->
+<button onclick="location.href='new-payment.html'"
+  style="position:fixed;bottom:80px;right:16px;width:56px;height:56px;background:var(--primary);
+    color:#fff;border:none;border-radius:50%;font-size:26px;cursor:pointer;z-index:800;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(6,78,59,0.4)">+</button>
+
+<!-- BOTTOM NAV -->
+<nav style="position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:1000">
+  <a href="dashboard.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">🏠</span><span>Home</span></a>
+  <a href="ledger.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">📋</span><span>Ledger</span></a>
+  <a href="reports.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--primary);font-size:10px;font-weight:600"><span style="font-size:20px">📊</span><span>Reports</span></a>
+  <a href="management.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">👥</span><span>Clients</span></a>
+  <a href="settings.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none;gap:2px;color:var(--text-muted);font-size:10px;font-weight:500"><span style="font-size:20px">⚙️</span><span>Settings</span></a>
+</nav>
+
+<script>
+var CHART_DATA = {
+  daily: {
+    labels: ['Jun 16','Jun 17','Jun 18','Jun 19','Jun 20','Jun 21','Jun 22'],
+    current:   [350,  0,   600, 0,   350, 700, 0  ],
+    backdated: [0,    350, 0,   0,   0,   0,   350],
+    advanced:  [0,    0,   0,   600, 0,   0,   0  ],
+    settled:   [0,    0,   350, 0,   350, 0,   0  ],
+    total: 3650, prev: 3100, growth: 17.7
+  },
+  weekly: {
+    labels: ['Week 1 (Jun 1–7)','Week 2 (Jun 8–14)','Week 3 (Jun 15–21)','Week 4 (Jun 22–28)'],
+    current:   [1750, 1300, 700,  600 ],
+    backdated: [0,    0,    700,  0   ],
+    advanced:  [350,  0,    0,    600 ],
+    settled:   [0,    350,  350,  0   ],
+    total: 5650, prev: 4900, growth: 15.3
+  },
+  monthly: {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+    current:   [8200, 9100, 7800, 11200, 10500, 12400],
+    backdated: [600,  400,  800,  500,   700,   1050  ],
+    advanced:  [350,  600,  0,    800,   350,   750   ],
+    settled:   [700,  500,  600,  900,   800,   700   ],
+    total: 12400, prev: 11100, growth: 11.7
+  }
+}
+
+const SCREEN_DATA = {
+  'reports_daily':   { role:'owner', label:'Daily view',   frs:['FR6','FR9','FR10','FR14','FR42'], data:{ activeTab:'daily'   } },
+  'reports_weekly':  { role:'owner', label:'Weekly view',  frs:['FR7','FR14'],                    data:{ activeTab:'weekly'  } },
+  'reports_monthly': { role:'owner', label:'Monthly view + growth', frs:['FR8','FR14','FR32'],    data:{ activeTab:'monthly' } }
+}
+const SCENARIOS = [
+  { key:'reports_daily',   label:'Daily view',              role:'owner' },
+  { key:'reports_weekly',  label:'Weekly view',             role:'owner' },
+  { key:'reports_monthly', label:'Monthly view + growth',   role:'owner' }
+]
+const DEFAULT_PAGE = { owner:'dashboard.html' }
+const ROLE_LABELS  = { owner:'Instructor' }
+
+const params = new URLSearchParams(location.search)
+let S = { scenario: params.get('scenario') || 'reports_daily', role: null }
+var _sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['reports_daily']
+S.role = localStorage.getItem('rp_role') || 'owner'
+var panelOpen = false
+var activeTab = null
+var chartInstance = null
+
+function togglePanel() {
+  panelOpen = !panelOpen
+  document.getElementById('state-panel').style.display = panelOpen ? 'block' : 'none'
+}
+
+function renderPanel() {
+  var el = document.getElementById('panel-scenarios')
+  if (el) el.innerHTML = SCENARIOS.map(function(sc) {
+    var a = sc.key === S.scenario
+    return '<button onclick="setScenario(\'' + sc.key + '\')" style="padding:8px 11px;border-radius:6px;border:none;cursor:pointer;font-size:12px;text-align:left;width:100%;line-height:1.4;min-height:44px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;font-weight:600' : 'background:transparent;color:#9ca3af') + '">' + sc.label + '</button>'
+  }).join('')
+  var re = document.getElementById('panel-roles')
+  if (re) re.innerHTML = Object.keys(ROLE_LABELS).map(function(r) {
+    var a = r === S.role
+    return '<button onclick="overrideRole(\'' + r + '\')" style="padding:5px 9px;border-radius:5px;border:1px solid;cursor:pointer;font-size:11px;min-height:36px;' + (a ? 'background:rgba(255,255,255,0.15);color:#f9fafb;border-color:rgba(255,255,255,0.2);font-weight:600' : 'background:transparent;color:#6b7280;border-color:rgba(255,255,255,0.08)') + '">' + ROLE_LABELS[r] + '</button>'
+  }).join('')
+}
+
+function setScenario(key) {
+  var sc = SCREEN_DATA[key]; if (!sc) return
+  S.scenario = key; S.role = sc.role
+  localStorage.setItem('rp_role', sc.role)
+  history.replaceState(null,'','?scenario='+key)
+  activeTab = null
+  renderPanel(); renderScreen()
+}
+
+function overrideRole(role) { S.role = role; localStorage.setItem('rp_role', role); renderPanel(); renderScreen() }
+function switchRole(role) { localStorage.setItem('rp_role', role); location.href = DEFAULT_PAGE[role] || 'dashboard.html' }
+
+function getData() {
+  var sc = SCREEN_DATA[S.scenario] || SCREEN_DATA['reports_daily']
+  return sc ? sc.data || {} : {}
+}
+
+function showToast(msg, type) {
+  var colors = { success:'#064E3B', error:'#991b1b', info:'#1e3a5f' }
+  var wrap = document.getElementById('toast-wrap'); if (!wrap) return
+  var t = document.createElement('div')
+  t.style.cssText = 'background:' + (colors[type]||colors.info) + ';color:#fff;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:500;margin-bottom:8px;transform:translateY(20px);opacity:0;transition:transform 0.3s ease,opacity 0.3s ease;pointer-events:auto;box-shadow:0 4px 12px rgba(0,0,0,0.25)'
+  t.textContent = msg
+  wrap.appendChild(t)
+  requestAnimationFrame(function() { requestAnimationFrame(function() { t.style.transform='translateY(0)'; t.style.opacity='1' }) })
+  setTimeout(function() { t.style.transform='translateY(20px)'; t.style.opacity='0'; setTimeout(function() { if(t.parentElement)t.remove() }, 300) }, 3500)
+}
+
+function switchTab(tab) { activeTab = tab; renderScreen() }
+
+function fmt(n) { return '$' + Number(n).toLocaleString('en-US') }
+
+function renderScreen() {
+  var data = getData()
+  var tab = activeTab || data.activeTab || 'daily'
+  var el = document.getElementById('screen-content'); if (!el) return
+  var cd = CHART_DATA[tab]
+
+  var growthSign = cd.growth >= 0 ? '+' : ''
+  var growthColor = cd.growth >= 0 ? '#0B6B5A' : '#DC2626'
+  var growthBg = cd.growth >= 0 ? '#E7F9F2' : '#FDE1E1'
+
+  var tabs = ['daily','weekly','monthly'].map(function(t) {
+    var labels = { daily:'Day', weekly:'Week', monthly:'Month' }
+    var isActive = t === tab
+    return '<button onclick="switchTab(\'' + t + '\')" style="flex:1;padding:10px;border:none;font-size:13px;font-weight:' + (isActive?'700':'500') + ';cursor:pointer;min-height:44px;touch-action:manipulation;border-bottom:2px solid ' + (isActive?'var(--primary)':'transparent') + ';color:' + (isActive?'var(--primary)':'var(--text-muted)') + ';background:transparent">' + labels[t] + '</button>'
+  }).join('')
+  var segmented = '<div style="display:flex;background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden">' + tabs + '</div>'
+
+  var summaryCard = '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">' +
+    '<div>' +
+    '<p style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Total</p>' +
+    '<p style="font-size:28px;font-weight:700;color:var(--text);font-family:Roboto,system-ui,sans-serif">' + fmt(cd.total) + '</p>' +
+    '</div>' +
+    '<div style="text-align:right">' +
+    '<span style="display:inline-block;padding:5px 10px;border-radius:20px;font-size:13px;font-weight:700;background:' + growthBg + ';color:' + growthColor + '">' + growthSign + cd.growth + '%</span>' +
+    '<p style="font-size:11px;color:var(--text-muted);margin-top:4px">vs prev period</p>' +
+    '</div>' +
+    '</div>'
+
+  var chartWrap = '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px">' +
+    '<canvas id="report-chart" height="200"></canvas>' +
+    '</div>'
+
+  var legend = '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px">' +
+    legendItem('#064E3B','Current') +
+    legendItem('#F39D0B','Backdated') +
+    legendItem('#6366F1','Advanced') +
+    legendItem('#9E9F9D','Settled') +
+    '</div>'
+
+  var breakdown = '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px">' +
+    '<p style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">Revenue by client</p>' +
+    clientRow('Ana García',    'AG-001', 2450, '#D3FBE9') +
+    clientRow('Sofia Ramírez', 'SR-003', 2100, '#EEF2FF') +
+    clientRow('Luis Martínez', 'LM-002', 1750, '#D3FBE9') +
+    clientRow('Roberto Torres','RT-006', 1800, '#F2EFE2') +
+    clientRow('Mariana López', 'ML-005', 1400, '#D3FBE9') +
+    '</div>'
+
+  el.innerHTML = segmented + summaryCard + chartWrap + legend + breakdown
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null }
+  var ctx = document.getElementById('report-chart')
+  if (ctx && window.Chart) {
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: cd.labels,
+        datasets: [
+          { label:'Current',   data: cd.current,   backgroundColor:'#064E3B', stack:'a' },
+          { label:'Backdated', data: cd.backdated,  backgroundColor:'#F39D0B', stack:'a' },
+          { label:'Advanced',  data: cd.advanced,   backgroundColor:'#6366F1', stack:'a' },
+          { label:'Settled',   data: cd.settled,    backgroundColor:'#9E9F9D', stack:'a' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': $' + c.parsed.y } } } },
+        scales: {
+          x: { stacked: true, grid: { display:false }, ticks: { font: { size:10, family:'Roboto' }, color:'#626976' } },
+          y: { stacked: true, grid: { color:'#F2EFE2' }, ticks: { font: { size:10, family:'Roboto' }, color:'#626976', callback: function(v) { return '$' + v } } }
+        }
+      }
+    })
+  }
+}
+
+function legendItem(color, label) {
+  return '<div style="display:flex;align-items:center;gap:6px">' +
+    '<div style="width:12px;height:12px;border-radius:3px;background:' + color + ';flex-shrink:0"></div>' +
+    '<span style="font-size:12px;color:var(--text-muted)">' + label + '</span></div>'
+}
+
+function clientRow(name, folio, amount, chipBg) {
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">' +
+    '<div style="display:flex;align-items:center;gap:10px">' +
+    '<div style="width:32px;height:32px;border-radius:50%;background:' + chipBg + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--primary);flex-shrink:0">' + name.charAt(0) + '</div>' +
+    '<div><p style="font-size:13px;font-weight:500;color:var(--text)">' + name + '</p>' +
+    '<p style="font-size:11px;color:var(--text-muted)">#' + folio + '</p></div>' +
+    '</div>' +
+    '<span style="font-size:14px;font-weight:700;color:var(--text);font-family:Roboto,system-ui,sans-serif">$' + amount.toLocaleString('en-US') + '</span>' +
+    '</div>'
+}
+
+document.addEventListener('DOMContentLoaded', function() { renderPanel(); renderScreen() })
+</script>
+</body>
+</html>

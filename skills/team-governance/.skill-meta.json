@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "skill_name": "team-governance",
+  "skill_version": "1.0.0",
+  "platforms": ["marketplace"],
+  "category": "analytics",
+  "tags": ["team", "governance", "project-management", "planning"],
+  "skill_description": "Configure your project team, platform tools, and member accounts to generate a team governance document.",
+  "author": { "name": "Anderson Monroy", "email": "anderson.monroy@halopowered.com" }
+}
