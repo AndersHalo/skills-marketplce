@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-22T22:12:58.840Z",
+  "generated": "2026-06-23T14:46:06.297Z",
   "skills": [
     {
       "name": "martech-css",
@@ -18,6 +18,59 @@
         "marketplace"
       ],
       "plugin": "martech-foundation",
+      "status": "published"
+    },
+    {
+      "name": "prototype-build",
+      "version": "2.0.0",
+      "category": "design",
+      "tags": [
+        "prototype",
+        "prd",
+        "html",
+        "ux",
+        "mockup"
+      ],
+      "description": "Reads a PRD from the project directory, extracts functional requirements, designs named demo scenarios per FR, and generates a multi-file HTML prototype — one file per screen — with embedded mock data, a floating State panel for one-click scenario switching, functional interactive widgets, and role-based navigation.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": "halo-product",
+      "status": "published"
+    },
+    {
+      "name": "roadmap-build",
+      "version": "1.5.0",
+      "category": "analytics",
+      "tags": [
+        "roadmap",
+        "prd",
+        "product",
+        "gantt",
+        "planning"
+      ],
+      "description": "Generate a product roadmap from PRD with optional Architecture doc. Produces Now/Next/Later, Theme-Based, OKR, and Gantt formats with AI-agent effort estimates.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": "halo-product",
+      "status": "published"
+    },
+    {
+      "name": "team-governance",
+      "version": "1.0.0",
+      "category": "analytics",
+      "tags": [
+        "team",
+        "governance",
+        "project-management",
+        "planning"
+      ],
+      "description": "Configure your project team, platform tools, and member accounts to generate a team governance document.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": "halo-product",
       "status": "published"
     }
   ]
