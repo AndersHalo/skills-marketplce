@@ -1,0 +1,5 @@
+changed=$(git diff --cached --name-only | grep -E '^skills/|^platforms/')
+if [ -n "$changed" ]; then
+  echo "Skill files staged — running validation..."
+  npm run validate
+fi
