@@ -14,6 +14,26 @@ const AuthorSchema = z.object({
     .endsWith('@halopowered.com', 'author.email must be a @halopowered.com address'),
 })
 
+const CATEGORIES = [
+  // Tech
+  'css',          // styling, design tokens, layout conventions
+  'javascript',   // JS patterns, vanilla or framework-agnostic utilities
+  'framework',    // framework-specific (React, Vue, Astro, Next.js…)
+  'api',          // REST, GraphQL, third-party integrations
+  'cms',          // CMS platforms (HubSpot, WordPress, Shopify, Webflow…)
+  'devops',       // CI/CD, deployment pipelines, infrastructure
+  'testing',      // QA, test automation, coverage strategies
+  'data',         // data transformation, ETL, reporting
+  // Workflow & Product
+  'workflow',     // process automation, step-by-step operational flows
+  'product',      // product management (roadmaps, PRDs, prototypes, governance)
+  'ai',           // AI/ML tools, prompt engineering, agent design
+  // Design
+  'design',       // UI/UX, design systems, visual specifications
+  // Analytics
+  'analytics',    // metrics, dashboards, KPI tracking
+] as const
+
 const SkillMetaSchema = z.object({
   schema_version: z.literal(2, {
     errorMap: () => ({ message: 'schema_version must be 2 — run the v2 migration' }),
@@ -26,9 +46,13 @@ const SkillMetaSchema = z.object({
     .regex(/^\d+\.\d+\.\d+$/, 'skill_version must be semver (e.g. "1.0.0")'),
   platforms: z
     .array(z.enum(['marketplace', 'bmad']))
-    .min(1, 'platforms must have at least one entry'),
-  category: z.enum(['css', 'javascript', 'deploy', 'analytics', 'design']),
-  tags: z.array(z.string()).min(1, 'tags must have at least one entry'),
+    .optional(),
+  category: z.enum(CATEGORIES, {
+    errorMap: () => ({
+      message: `category must be one of: ${CATEGORIES.join(', ')}`,
+    }),
+  }),
+  tags: z.array(z.string()).optional(),
   skill_description: z
     .string()
     .min(20, 'skill_description must be at least 20 characters')

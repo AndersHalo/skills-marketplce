@@ -48,9 +48,7 @@ build/
   "schema_version": 2,
   "skill_name": "my-skill",
   "skill_version": "1.0.0",
-  "platforms": ["marketplace"],
-  "category": "css",
-  "tags": ["css", "responsive"],
+  "category": "workflow",
   "skill_description": "At least 20 characters describing what this skill does.",
   "author": {
     "name": "Your name",
@@ -58,6 +56,12 @@ build/
   }
 }
 ```
+
+`platforms` and `tags` are optional. Add `"platforms": ["marketplace"]` when you're ready to publish the skill to a plugin.
+
+**Categories:** `css` · `javascript` · `framework` · `api` · `cms` · `devops` · `testing` · `data` · `workflow` · `product` · `ai` · `design` · `analytics`
+
+**Tags** are optional free-form keywords for finer search within a category (e.g. `["hubspot", "b2b"]`). Add them when the skill targets a specific platform or use-case.
 
 4. Open PR → merge → CI publishes automatically
 
@@ -84,10 +88,10 @@ If the plugin doesn't exist, create a new entry. CI generates everything else.
 
 | What | Version | Who |
 |------|---------|-----|
-| Skill | `skill_version` in `.skill-meta.json` | Author, manual |
-| Plugin | `YYYY-MM-DD-{git-sha}` of last change | CI automatic |
+| Skill | `skill_version` in `.skill-meta.json` | Author, manual semver |
+| Plugin | `version` in `marketplace.yaml` | Patch auto-bumped by CI; minor/major edited manually |
 
-Plugin version only bumps when its skills change — not on every merge.
+**Patch** bumps automatically when skill files change. For **minor** (new feature) or **major** (breaking), edit `version` in `marketplace.yaml` before merging.
 
 ---
 

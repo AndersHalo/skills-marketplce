@@ -3,7 +3,7 @@
   "skill_name": "roadmap-build",
   "skill_version": "1.5.0",
   "platforms": ["marketplace"],
-  "category": "analytics",
+  "category": "product",
   "tags": ["roadmap", "prd", "product", "gantt", "planning"],
   "skill_description": "Generate a product roadmap from PRD with optional Architecture doc. Produces Now/Next/Later, Theme-Based, OKR, and Gantt formats with AI-agent effort estimates.",
   "author": { "name": "Anderson Monroy", "email": "anderson.monroy@halopowered.com" }

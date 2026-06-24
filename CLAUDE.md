@@ -18,12 +18,44 @@ Private Halo skills repository. Converts a skills filesystem into Claude Code pl
   "skill_name": "kebab-case",
   "skill_version": "1.0.0",
   "platforms": ["marketplace"],
-  "category": "css | javascript | deploy | analytics | design",
-  "tags": ["array", "of", "keywords"],
+  "category": "product",
+  "tags": ["optional", "discovery", "keywords"],
   "skill_description": "At least 20 characters, max 500.",
   "author": { "name": "...", "email": "...@halopowered.com" }
 }
 ```
+
+### Fields
+
+| Field | Required | Notes |
+|---|---|---|
+| `schema_version` | ✅ | Must be `2` |
+| `skill_name` | ✅ | kebab-case, must match directory name |
+| `skill_version` | ✅ | semver (`1.0.0`) |
+| `category` | ✅ | See category list below |
+| `skill_description` | ✅ | 20–500 characters |
+| `author.name` | ✅ | Full name |
+| `author.email` | ✅ | Must be `@halopowered.com` |
+| `platforms` | ⬜ | Optional. `["marketplace"]`, `["bmad"]`, or both. Omit if not yet published. |
+| `tags` | ⬜ | Optional. Free-form keywords for finer search within a category (e.g. `["hubspot", "b2b", "landing-page"]`). Add them when the skill targets a specific platform or use-case. |
+
+### Categories
+
+| Category | Use for |
+|---|---|
+| `css` | Styling, design tokens, layout conventions |
+| `javascript` | JS patterns, vanilla or framework-agnostic utilities |
+| `framework` | Framework-specific skills (React, Vue, Astro, Next.js…) |
+| `api` | REST, GraphQL, third-party integrations |
+| `cms` | CMS platforms (HubSpot, WordPress, Shopify, Webflow…) |
+| `devops` | CI/CD, deployment pipelines, infrastructure |
+| `testing` | QA, test automation, coverage strategies |
+| `data` | Data transformation, ETL, reporting |
+| `workflow` | Process automation, step-by-step operational flows |
+| `product` | Product management — roadmaps, PRDs, prototypes, governance |
+| `ai` | AI/ML tools, prompt engineering, agent design |
+| `design` | UI/UX, design systems, visual specifications |
+| `analytics` | Metrics, dashboards, KPI tracking |
 
 Removed legacy fields: `output_folder`, `skill_inputs`, `skill_process`, `skill_outputs`, `aux_files`, `applied_suggestions`.
 
@@ -38,7 +70,7 @@ npm run release         # runs manifest + plugins + bmad (bmad pending)
 
 ## Plugin versioning
 
-Plugin version is derived from the last git commit that touched its files — not global, not manual. If only `martech-css` changes, only `martech-foundation` gets a new version.
+Plugin version is declared in `platforms/marketplace.yaml` (e.g. `version: "1.2.0"`). CI auto-bumps the **patch** number when skill files change and the developer didn't manually update the version. For **minor** (new feature) or **major** (breaking change), edit the version in `marketplace.yaml` before merging.
 
 ## CI
 
