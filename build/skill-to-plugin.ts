@@ -10,7 +10,7 @@ const SKILLS_DIR = 'skills'
 const DIST_DIR = 'dist'
 
 // Files that are build metadata, not skill content
-const EXCLUDE_FILES = new Set(['.skill-meta.json'])
+const EXCLUDE_FILES = new Set(['.skill-meta.json', 'session.json'])
 
 function copySkillDir(srcDir: string, destDir: string): string[] {
   const copied: string[] = []
