@@ -51,7 +51,7 @@ Private Halo skills repository. Converts a skills filesystem into Claude Code pl
 | `devops` | CI/CD, deployment pipelines, infrastructure |
 | `testing` | QA, test automation, coverage strategies |
 | `data` | Data transformation, ETL, reporting |
-| `workflow` | Process automation, step-by-step operational flows |
+| `workflow` | Software development lifecycle — git flow, code review, branching strategies, release process, sprint rituals |
 | `product` | Product management — roadmaps, PRDs, prototypes, governance |
 | `ai` | AI/ML tools, prompt engineering, agent design |
 | `design` | UI/UX, design systems, visual specifications |

@@ -25,7 +25,7 @@ const CATEGORIES = [
   'testing',      // QA, test automation, coverage strategies
   'data',         // data transformation, ETL, reporting
   // Workflow & Product
-  'workflow',     // process automation, step-by-step operational flows
+  'workflow',     // software development lifecycle — git flow, code review, branching, release process, sprint rituals
   'product',      // product management (roadmaps, PRDs, prototypes, governance)
   'ai',           // AI/ML tools, prompt engineering, agent design
   // Design
