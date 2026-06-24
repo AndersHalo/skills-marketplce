@@ -41,21 +41,22 @@ Private Halo skills repository. Converts a skills filesystem into Claude Code pl
 
 ### Categories
 
-| Category | Use for |
-|---|---|
-| `css` | Styling, design tokens, layout conventions |
-| `javascript` | JS patterns, vanilla or framework-agnostic utilities |
-| `framework` | Framework-specific skills (React, Vue, Astro, Next.js…) |
-| `api` | REST, GraphQL, third-party integrations |
-| `cms` | CMS platforms (HubSpot, WordPress, Shopify, Webflow…) |
-| `devops` | CI/CD, deployment pipelines, infrastructure |
-| `testing` | QA, test automation, coverage strategies |
-| `data` | Data transformation, ETL, reporting |
-| `workflow` | Software development lifecycle — git flow, code review, branching strategies, release process, sprint rituals |
-| `product` | Product management — roadmaps, PRDs, prototypes, governance |
-| `ai` | AI/ML tools, prompt engineering, agent design |
-| `design` | UI/UX, design systems, visual specifications |
-| `analytics` | Metrics, dashboards, KPI tracking |
+| Group | Category | Use for |
+|---|---|---|
+| Code | `css` | Styling, design tokens, layout conventions |
+| Code | `javascript` | JS patterns, vanilla or framework-agnostic utilities |
+| Code | `framework` | Framework-specific skills (React, Vue, Astro, Next.js…) |
+| Code | `api` | REST, GraphQL, third-party integrations |
+| Code | `cms` | CMS platforms (HubSpot, WordPress, Shopify, Webflow…) |
+| Quality & Delivery | `testing` | QA, test automation, coverage strategies |
+| Quality & Delivery | `devops` | CI/CD pipelines, deployment, infrastructure |
+| Quality & Delivery | `security` | Security audits, auth patterns, OWASP, vulnerability scanning |
+| Product & Design | `product` | Roadmaps, PRDs, prototypes, discovery |
+| Product & Design | `design` | UI/UX, design systems, visual specifications |
+| Data & AI | `analytics` | Metrics, dashboards, KPI tracking |
+| Data & AI | `data` | Data transformation, ETL, pipelines |
+| Data & AI | `ai` | AI agents, LLM tools, prompt engineering, Claude integrations |
+| Team & Process | `process` | Dev lifecycle practices — team governance, code review conventions, branching strategy, sprint rituals, release process, documentation standards |
 
 Removed legacy fields: `output_folder`, `skill_inputs`, `skill_process`, `skill_outputs`, `aux_files`, `applied_suggestions`.
 

@@ -15,23 +15,25 @@ const AuthorSchema = z.object({
 })
 
 const CATEGORIES = [
-  // Tech
+  // Code
   'css',          // styling, design tokens, layout conventions
   'javascript',   // JS patterns, vanilla or framework-agnostic utilities
   'framework',    // framework-specific (React, Vue, Astro, Next.js…)
   'api',          // REST, GraphQL, third-party integrations
   'cms',          // CMS platforms (HubSpot, WordPress, Shopify, Webflow…)
-  'devops',       // CI/CD, deployment pipelines, infrastructure
+  // Quality & Delivery
   'testing',      // QA, test automation, coverage strategies
-  'data',         // data transformation, ETL, reporting
-  // Workflow & Product
-  'workflow',     // software development lifecycle — git flow, code review, branching, release process, sprint rituals
-  'product',      // product management (roadmaps, PRDs, prototypes, governance)
-  'ai',           // AI/ML tools, prompt engineering, agent design
-  // Design
+  'devops',       // CI/CD pipelines, deployment, infrastructure
+  'security',     // security audits, auth patterns, OWASP, vulnerability scanning
+  // Product & Design
+  'product',      // product management — roadmaps, PRDs, prototypes, discovery
   'design',       // UI/UX, design systems, visual specifications
-  // Analytics
+  // Data & AI
   'analytics',    // metrics, dashboards, KPI tracking
+  'data',         // data transformation, ETL, pipelines
+  'ai',           // AI agents, LLM tools, prompt engineering, Claude integrations
+  // Team & Process
+  'process',      // dev lifecycle practices — team governance, code review conventions, branching strategy, sprint rituals, release process, documentation standards
 ] as const
 
 const SkillMetaSchema = z.object({

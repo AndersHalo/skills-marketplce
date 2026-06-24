@@ -59,7 +59,12 @@ build/
 
 `platforms` and `tags` are optional. Add `"platforms": ["marketplace"]` when you're ready to publish the skill to a plugin.
 
-**Categories:** `css` · `javascript` · `framework` · `api` · `cms` · `devops` · `testing` · `data` · `workflow` · `product` · `ai` · `design` · `analytics`
+**Categories:**
+- Code: `css` · `javascript` · `framework` · `api` · `cms`
+- Quality & Delivery: `testing` · `devops` · `security`
+- Product & Design: `product` · `design`
+- Data & AI: `analytics` · `data` · `ai`
+- Team & Process: `process`
 
 **Tags** are optional free-form keywords for finer search within a category (e.g. `["hubspot", "b2b"]`). Add them when the skill targets a specific platform or use-case.
 
