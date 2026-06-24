@@ -9,8 +9,6 @@ interface MarketplaceYaml {
 const SKILLS_DIR = 'skills'
 const DIST_DIR = 'dist'
 
-// Directories inside a skill folder that are user-generated output, not skill content
-const EXCLUDE_DIRS = new Set(['prototypes'])
 // Files that are build metadata, not skill content
 const EXCLUDE_FILES = new Set(['.skill-meta.json'])
 
@@ -21,7 +19,6 @@ function copySkillDir(srcDir: string, destDir: string): string[] {
     fs.mkdirSync(dest, { recursive: true })
     for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        if (EXCLUDE_DIRS.has(entry.name)) continue
         walk(
           path.join(src, entry.name),
           path.join(dest, entry.name),
