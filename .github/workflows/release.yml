@@ -21,6 +21,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate all skills
+        run: npm run validate
+
       - name: Bump plugin versions
         run: npm run bump:versions
 
