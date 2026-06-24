@@ -9,6 +9,36 @@ interface MarketplaceYaml {
 const SKILLS_DIR = 'skills'
 const DIST_DIR = 'dist'
 
+// Directories inside a skill folder that are user-generated output, not skill content
+const EXCLUDE_DIRS = new Set(['prototypes'])
+// Files that are build metadata, not skill content
+const EXCLUDE_FILES = new Set(['.skill-meta.json'])
+
+function copySkillDir(srcDir: string, destDir: string): string[] {
+  const copied: string[] = []
+
+  function walk(src: string, dest: string, rel: string) {
+    fs.mkdirSync(dest, { recursive: true })
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (EXCLUDE_DIRS.has(entry.name)) continue
+        walk(
+          path.join(src, entry.name),
+          path.join(dest, entry.name),
+          path.join(rel, entry.name),
+        )
+      } else {
+        if (EXCLUDE_FILES.has(entry.name)) continue
+        fs.copyFileSync(path.join(src, entry.name), path.join(dest, entry.name))
+        copied.push(path.join(rel, entry.name))
+      }
+    }
+  }
+
+  walk(srcDir, destDir, '')
+  return copied
+}
+
 const marketplaceYaml = yaml.load(
   fs.readFileSync('platforms/marketplace.yaml', 'utf-8')
 ) as MarketplaceYaml
@@ -17,21 +47,20 @@ const marketplacePlugins: Array<{ name: string; description: string; path: strin
 
 for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
   const pluginDir = path.join(DIST_DIR, 'plugins', pluginName)
-  const skillPaths: string[] = []
+  const skillEntrypoints: string[] = []
 
   for (const skillName of plugin.skills) {
-    const skillMdPath = path.join(SKILLS_DIR, skillName, 'SKILL.md')
+    const skillSrcDir = path.join(SKILLS_DIR, skillName)
+    const skillDestDir = path.join(pluginDir, 'skills', skillName)
 
-    if (!fs.existsSync(skillMdPath)) {
+    if (!fs.existsSync(path.join(skillSrcDir, 'SKILL.md'))) {
       console.warn(`  warn: ${skillName}/SKILL.md not found, skipping`)
       continue
     }
 
-    const destDir = path.join(pluginDir, 'skills')
-    fs.mkdirSync(destDir, { recursive: true })
-    fs.copyFileSync(skillMdPath, path.join(destDir, `${skillName}.md`))
-    skillPaths.push(`skills/${skillName}.md`)
-    console.log(`  + ${skillName}`)
+    const files = copySkillDir(skillSrcDir, skillDestDir)
+    skillEntrypoints.push(`skills/${skillName}/SKILL.md`)
+    console.log(`  + ${skillName} (${files.length} files)`)
   }
 
   const version = plugin.version ?? '0.0.0'
@@ -41,7 +70,7 @@ for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
     name: pluginName,
     version,
     description: plugin.description ?? '',
-    skills: skillPaths,
+    skills: skillEntrypoints,
   }
 
   const pluginMetaDir = path.join(pluginDir, '.claude-plugin')
@@ -49,7 +78,7 @@ for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
   fs.writeFileSync(path.join(pluginMetaDir, 'plugin.json'), JSON.stringify(pluginJson, null, 2))
 
   marketplacePlugins.push({ name: pluginName, description: plugin.description ?? '', path: `plugins/${pluginName}` })
-  console.log(`plugin: ${pluginName} v${version} (${skillPaths.length} skills)`)
+  console.log(`plugin: ${pluginName} v${version} (${skillEntrypoints.length} skills)`)
 }
 
 const marketplaceJson = {
