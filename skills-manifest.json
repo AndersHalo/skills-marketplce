@@ -1,17 +1,19 @@
 {
-  "generated": "2026-06-24T12:18:57.742Z",
+  "generated": "2026-06-24T12:25:26.351Z",
   "skills": [
     {
       "name": "martech-css",
       "version": "1.0.0",
       "category": "css",
       "tags": [
-        "css",
         "bem",
         "responsive",
         "typography",
         "accessibility",
-        "animation"
+        "animation",
+        "hubspot",
+        "shopify",
+        "wordpress"
       ],
       "description": "General CSS conventions used across all client web projects regardless of platform (HubSpot, Shopify, WordPress). Covers BEM naming, fluid typography with clamp(), grid/flex layout, button patterns, responsive breakpoint strategy, transitions/animation, and CSS accessibility.",
       "platforms": [
@@ -25,11 +27,12 @@
       "version": "2.0.0",
       "category": "design",
       "tags": [
-        "prototype",
         "prd",
         "html",
-        "ux",
-        "mockup"
+        "prototype",
+        "scenarios",
+        "role-based",
+        "functional-prototype"
       ],
       "description": "Reads a PRD from the project directory, extracts functional requirements, designs named demo scenarios per FR, and generates a multi-file HTML prototype — one file per screen — with embedded mock data, a floating State panel for one-click scenario switching, functional interactive widgets, and role-based navigation.",
       "platforms": [
@@ -43,11 +46,13 @@
       "version": "1.5.0",
       "category": "product",
       "tags": [
-        "roadmap",
         "prd",
-        "product",
         "gantt",
-        "planning"
+        "now-next-later",
+        "okr",
+        "sprint",
+        "estimation",
+        "roadmap"
       ],
       "description": "Generate a product roadmap from PRD with optional Architecture doc. Produces Now/Next/Later, Theme-Based, OKR, and Gantt formats with AI-agent effort estimates.",
       "platforms": [
@@ -63,8 +68,11 @@
       "tags": [
         "team",
         "governance",
-        "project-management",
-        "planning"
+        "jira",
+        "github",
+        "slack",
+        "roles",
+        "sprint"
       ],
       "description": "Configure your project team, platform tools, and member accounts to generate a team governance document.",
       "platforms": [
