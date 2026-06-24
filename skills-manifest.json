@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T14:12:53.476Z",
+  "generated": "2026-06-24T16:50:20.170Z",
   "skills": [
     {
       "name": "martech-css",
@@ -60,6 +60,23 @@
       ],
       "plugin": "halo-product",
       "status": "published"
+    },
+    {
+      "name": "skill-build",
+      "version": "1.1.0",
+      "category": "process",
+      "tags": [
+        "skill-authoring",
+        "code-generation",
+        "scaffolding",
+        "ai-tools"
+      ],
+      "description": "Conversational skill builder. Collects requirements from a free-form brief, validates and analyzes them, previews a plan for user approval, and generates a production-ready SKILL.md with optional auxiliary files.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": null,
+      "status": "unpublished"
     },
     {
       "name": "team-governance",
