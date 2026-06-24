@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-24T12:01:09.276Z",
+  "generated": "2026-06-24T12:11:20.993Z",
   "skills": [
     {
       "name": "martech-css",
@@ -41,7 +41,7 @@
     {
       "name": "roadmap-build",
       "version": "1.5.0",
-      "category": "analytics",
+      "category": "product",
       "tags": [
         "roadmap",
         "prd",
@@ -59,7 +59,7 @@
     {
       "name": "team-governance",
       "version": "1.0.0",
-      "category": "analytics",
+      "category": "workflow",
       "tags": [
         "team",
         "governance",
