@@ -5,7 +5,7 @@ plugins:
     skills:
       - martech-css
   halo-product:
-    version: 1.0.5
+    version: 1.0.6
     description: Product team toolkit for prototyping, roadmap generation, and team governance.
     skills:
       - prototype-build
