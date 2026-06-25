@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "skill_name": "mercer-develop",
+  "skill_version": "1.0.0",
+  "platforms": ["marketplace"],
+  "category": "process",
+  "tags": ["mercer", "mmc", "vdi", "okta", "client-engagement"],
+  "skill_description": "Context for developing on the Mercer (MMC) client engagement. Covers VDI-only development via Omnissa Horizon, Okta auth, closed-network GitHub workflow, HashiCorp Vault, Polaris/Komodor deployments, dependency-freshness policy, code-owner approvals, and the private Atlas UI library.",
+  "author": {
+    "name": "Jonathan Franco",
+    "email": "jonathan.franco@halopowered.com"
+  }
+}
