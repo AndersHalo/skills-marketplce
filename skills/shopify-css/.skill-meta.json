@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "skill_name": "shopify-css",
+  "skill_version": "1.0.0",
+  "platforms": ["marketplace"],
+  "category": "cms",
+  "tags": ["shopify", "liquid", "sections", "themes", "bem"],
+  "skill_description": "CSS conventions for Shopify sections and themes. Use alongside the general martech-css skill. Covers when to use {% stylesheet %} vs {% style %} vs assets/ files, section-ID scoping, color schemes, BEM scoping to prevent leaks, the image CDN, and performance gotchas.",
+  "author": {
+    "name": "Susan Joo",
+    "email": "susan@halopowered.com"
+  }
+}

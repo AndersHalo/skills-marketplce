@@ -1,6 +1,23 @@
 {
-  "generated": "2026-06-24T16:50:20.170Z",
+  "generated": "2026-06-25T17:59:43.957Z",
   "skills": [
+    {
+      "name": "bmad-release",
+      "version": "2.1.0",
+      "category": "devops",
+      "tags": [
+        "bmad",
+        "release",
+        "github",
+        "workflow"
+      ],
+      "description": "Creates new BMAD workflows and modules, releases version updates, and re-transforms existing entries via GitHub PR to the BMAD repo.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": null,
+      "status": "unpublished"
+    },
     {
       "name": "martech-css",
       "version": "1.0.0",
@@ -60,6 +77,24 @@
       ],
       "plugin": "halo-product",
       "status": "published"
+    },
+    {
+      "name": "shopify-css",
+      "version": "1.0.0",
+      "category": "cms",
+      "tags": [
+        "shopify",
+        "liquid",
+        "sections",
+        "themes",
+        "bem"
+      ],
+      "description": "CSS conventions for Shopify sections and themes. Use alongside the general martech-css skill. Covers when to use {% stylesheet %} vs {% style %} vs assets/ files, section-ID scoping, color schemes, BEM scoping to prevent leaks, the image CDN, and performance gotchas.",
+      "platforms": [
+        "marketplace"
+      ],
+      "plugin": null,
+      "status": "unpublished"
     },
     {
       "name": "skill-build",
