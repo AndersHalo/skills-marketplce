@@ -121,6 +121,65 @@ for (const dir of skillDirs) {
   console.log(`✔ ${label} (v${result.data.skill_version})`)
 }
 
+// ── Manifest version sync check ───────────────────────────────────────────────
+
+const MANIFEST_PATH = 'skills-manifest.json'
+
+if (!fs.existsSync(MANIFEST_PATH)) {
+  console.error(`\n✖ skills-manifest.json not found — run "npm run build:manifest"`)
+  errors++
+} else {
+  let manifest: { skills: Array<{ name: string; version: string | null }> }
+  try {
+    manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf-8'))
+  } catch {
+    console.error(`✖ skills-manifest.json: invalid JSON`)
+    errors++
+    manifest = { skills: [] }
+  }
+
+  const manifestVersions = new Map<string, string | null>(
+    manifest.skills.map(s => [s.name, s.version])
+  )
+
+  console.log('')
+  let manifestErrors = 0
+
+  for (const dir of skillDirs) {
+    const metaPath = path.join(SKILLS_DIR, dir, '.skill-meta.json')
+    if (!fs.existsSync(metaPath)) continue
+
+    let meta: { skill_name?: string; skill_version?: string }
+    try {
+      meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'))
+    } catch {
+      continue // invalid JSON already reported above
+    }
+
+    const { skill_name, skill_version } = meta
+    if (!skill_name || !skill_version) continue // schema errors already reported above
+
+    if (!manifestVersions.has(skill_name)) {
+      console.error(
+        `✖ skills/${dir}: "${skill_name}" is missing from skills-manifest.json — run "npm run build:manifest"`
+      )
+      errors++
+      manifestErrors++
+    } else if (manifestVersions.get(skill_name) !== skill_version) {
+      const manifestVersion = manifestVersions.get(skill_name) ?? 'null'
+      console.error(
+        `✖ skills/${dir}: version mismatch — .skill-meta.json v${skill_version} ≠ skills-manifest.json v${manifestVersion} — run "npm run build:manifest"`
+      )
+      errors++
+      manifestErrors++
+    }
+  }
+
+  if (manifestErrors === 0) {
+    console.log(`✔ skills-manifest.json is in sync`)
+  }
+}
+
 console.log(`\n${skillDirs.length} skills checked — ${errors} error(s)`)
 
 if (errors > 0) process.exit(1)

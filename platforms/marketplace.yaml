@@ -11,3 +11,4 @@ plugins:
       - prototype-build
       - roadmap-build
       - team-governance
+      - mercer-develop

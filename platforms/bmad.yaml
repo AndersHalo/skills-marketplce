@@ -1,6 +1,63 @@
-skills: []
-# Example entries:
-#   - name: roadmap-build
-#     type: workflow
-#   - name: hpm-setup
-#     type: module
+workflows:
+  team-governance:
+    released_version: "1.0.0"
+    display-name: Team Governance
+    menu-code: TG
+    description: Configure team tools and member accounts to generate a team governance document
+    action: configure
+    args: "{-H: headless mode}"
+    phase: anytime
+    required: false
+    output-location: docs/governance
+    outputs: team-governance.md
+
+  roadmap-build:
+    released_version: "1.5.0"
+    display-name: Roadmap Builder
+    menu-code: RB
+    description: Generate a product roadmap in Now/Next/Later, OKR, and Gantt formats from a PRD
+    action: build-roadmap
+    args: "{prd_path: path to PRD}|{-H: headless}"
+    phase: 2-planning
+    required: false
+    output-location: docs/roadmap
+    outputs: roadmap.md
+
+  prototype-build:
+    released_version: "2.0.0"
+    display-name: Prototype Builder
+    menu-code: PB
+    description: Generate a multi-screen HTML prototype from a PRD with mock data and scenario switching
+    action: build-prototype
+    args: "{prd_path: path to PRD}|{-H: headless}"
+    phase: 3-solutioning
+    required: false
+    output-location: docs/prototypes
+    outputs: prototype HTML files
+
+modules:
+  hpp:
+    module_name: "Halo Product Module"
+    module_description: "Product team toolkit for prototyping, roadmap generation, and team governance."
+    approach: setup-skill
+    module_version: "1.0.0"
+    default_selected: false
+    module_greeting: >
+      Welcome to the Halo Product Module! Run hpp-setup again anytime to reconfigure.
+    released_version: "1.0.0"
+    skill_versions:
+      team-governance: "1.0.0"
+      roadmap-build: "1.5.0"
+      prototype-build: "2.0.0"
+    skills:
+      - skill: team-governance
+        preceded-by: ~
+        followed-by: "roadmap-build:build-roadmap"
+
+      - skill: roadmap-build
+        preceded-by: "team-governance:configure"
+        followed-by: "prototype-build:build-prototype"
+
+      - skill: prototype-build
+        preceded-by: "roadmap-build:build-roadmap"
+        followed-by: ~
