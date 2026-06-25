@@ -1,23 +1,6 @@
 {
-  "generated": "2026-06-25T18:06:29.497Z",
+  "generated": "2026-06-25T18:06:50.220Z",
   "skills": [
-    {
-      "name": "bmad-release",
-      "version": "2.1.0",
-      "category": "devops",
-      "tags": [
-        "bmad",
-        "release",
-        "github",
-        "workflow"
-      ],
-      "description": "Creates new BMAD workflows and modules, releases version updates, and re-transforms existing entries via GitHub PR to the BMAD repo.",
-      "platforms": [
-        "marketplace"
-      ],
-      "plugin": null,
-      "status": "unpublished"
-    },
     {
       "name": "martech-css",
       "version": "1.0.0",
