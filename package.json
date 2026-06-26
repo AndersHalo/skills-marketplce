@@ -4,11 +4,9 @@
   "private": true,
   "scripts": {
     "validate": "tsx build/validate-skills.ts",
-    "bump:versions": "tsx build/bump-versions.ts",
     "build:manifest": "tsx build/generate-manifest.ts",
     "build:plugins": "tsx build/skill-to-plugin.ts",
-    "build:bmad": "tsx build/skill-to-bmad.ts",
-    "release": "npm run bump:versions && npm run build:manifest && npm run build:plugins && npm run build:bmad",
+    "release": "npm run build:manifest && npm run build:plugins",
     "prepare": "husky"
   },
   "devDependencies": {
