@@ -24,11 +24,11 @@ jobs:
       - name: Validate all skills
         run: npm run validate
 
-      - name: Bump plugin versions
-        run: npm run bump:versions
-
       - name: Generate skills manifest
         run: npm run build:manifest
+
+      - name: Bump plugin versions
+        run: npm run bump:plugins
 
       - name: Commit version bumps and manifest
         run: |

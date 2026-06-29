@@ -146,10 +146,18 @@ Proceed to the corresponding path.
 
 **[Step 3 — Release]**
 
-Read `dist/skills-manifest.json` using the mandatory read loop — source of truth for current `skill_version` per skill.
+**Run `npm run build:manifest`** to ensure the manifest reflects the latest skill versions before comparing:
 
-If `dist/skills-manifest.json` cannot be read:
-> ⚠ Run `npm run build:manifest` first to generate it.
+```bash
+npm run build:manifest
+```
+
+If this command fails, stop and report the output to the user.
+
+Read `skills-manifest.json` using the mandatory read loop — source of truth for current `skill_version` per skill.
+
+If `skills-manifest.json` cannot be read:
+> ⚠ `npm run build:manifest` may have failed. Check for errors above.
 
 For each entry in `workflows` and `modules` maps from bmad.yaml, compute release status:
 

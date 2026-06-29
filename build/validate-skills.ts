@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { z } from 'zod'
+import yaml from 'js-yaml'
 
 const SKILLS_DIR = 'skills'
 
@@ -69,6 +70,7 @@ const skillDirs = fs.readdirSync(SKILLS_DIR).filter(d =>
 )
 
 let errors = 0
+const skillVersionMap = new Map<string, string>()
 
 for (const dir of skillDirs) {
   const metaPath = path.join(SKILLS_DIR, dir, '.skill-meta.json')
@@ -118,6 +120,7 @@ for (const dir of skillDirs) {
     continue
   }
 
+  skillVersionMap.set(result.data.skill_name, result.data.skill_version)
   console.log(`✔ ${label} (v${result.data.skill_version})`)
 }
 
@@ -153,11 +156,11 @@ if (!fs.existsSync(MANIFEST_PATH)) {
     try {
       meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'))
     } catch {
-      continue // invalid JSON already reported above
+      continue
     }
 
     const { skill_name, skill_version } = meta
-    if (!skill_name || !skill_version) continue // schema errors already reported above
+    if (!skill_name || !skill_version) continue
 
     if (!manifestVersions.has(skill_name)) {
       console.error(
@@ -177,6 +180,116 @@ if (!fs.existsSync(MANIFEST_PATH)) {
 
   if (manifestErrors === 0) {
     console.log(`✔ skills-manifest.json is in sync`)
+  }
+}
+
+// ── Marketplace cross-check ───────────────────────────────────────────────────
+
+interface MarketplacePlugin {
+  version: string
+  skill_versions?: Record<string, string>
+  skills: string[]
+}
+
+interface MarketplaceYaml {
+  plugins: Record<string, MarketplacePlugin>
+}
+
+const MARKETPLACE_PATH = 'platforms/marketplace.yaml'
+
+if (!fs.existsSync(MARKETPLACE_PATH)) {
+  console.error(`\n✖ platforms/marketplace.yaml not found`)
+  errors++
+} else {
+  const marketplace = yaml.load(fs.readFileSync(MARKETPLACE_PATH, 'utf-8')) as MarketplaceYaml
+  console.log('')
+  let marketplaceErrors = 0
+
+  for (const [pluginName, plugin] of Object.entries(marketplace.plugins)) {
+    for (const skillName of plugin.skills) {
+      if (!fs.existsSync(path.join(SKILLS_DIR, skillName))) {
+        console.error(`✖ marketplace.yaml [${pluginName}]: "${skillName}" not found in skills/`)
+        errors++
+        marketplaceErrors++
+        continue
+      }
+
+      const metaPath = path.join(SKILLS_DIR, skillName, '.skill-meta.json')
+      if (fs.existsSync(metaPath)) {
+        try {
+          const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8')) as { platforms?: string[] }
+          if (!meta.platforms?.includes('marketplace')) {
+            console.error(
+              `✖ marketplace.yaml [${pluginName}]: "${skillName}" is missing platforms: ["marketplace"] in .skill-meta.json`
+            )
+            errors++
+            marketplaceErrors++
+          }
+        } catch { /* invalid JSON already reported above */ }
+      }
+    }
+
+    const snapshot = plugin.skill_versions
+    if (!snapshot) {
+      console.log(`⚠ marketplace.yaml [${pluginName}]: skill_versions snapshot missing — run "npm run build:manifest"`)
+    } else {
+      for (const skillName of plugin.skills) {
+        const current = skillVersionMap.get(skillName)
+        if (current && snapshot[skillName] !== current) {
+          console.error(
+            `✖ marketplace.yaml [${pluginName}]: stale snapshot — ${skillName} changed ${snapshot[skillName] ?? 'null'} → ${current} — run "npm run build:manifest"`
+          )
+          errors++
+          marketplaceErrors++
+        }
+      }
+    }
+  }
+
+  if (marketplaceErrors === 0) {
+    console.log(`✔ marketplace.yaml is consistent`)
+  }
+}
+
+// ── BMAD drift check (warning only) ──────────────────────────────────────────
+
+interface BmadYaml {
+  workflows?: Record<string, { released_version?: string | null }>
+}
+
+const BMAD_PATH = 'platforms/bmad.yaml'
+
+if (fs.existsSync(BMAD_PATH)) {
+  const bmad = yaml.load(fs.readFileSync(BMAD_PATH, 'utf-8')) as BmadYaml
+  const workflows = bmad.workflows ?? {}
+  console.log('')
+  let bmadWarnings = 0
+
+  for (const [skillName, workflow] of Object.entries(workflows)) {
+    const current = skillVersionMap.get(skillName)
+    const released = workflow.released_version
+
+    if (!current || !released) continue
+
+    const toTuple = (v: string): [number, number, number] => {
+      const [maj = 0, min = 0, pat = 0] = v.split('.').map(Number)
+      return [maj, min, pat]
+    }
+    const [cMaj, cMin, cPat] = toTuple(current)
+    const [rMaj, rMin, rPat] = toTuple(released)
+    const isNewer =
+      cMaj > rMaj ||
+      (cMaj === rMaj && cMin > rMin) ||
+      (cMaj === rMaj && cMin === rMin && cPat > rPat)
+
+    if (isNewer) {
+      console.log(`⚠ bmad.yaml [${skillName}]: skill updated v${released} → v${current} — run /bmad-release to publish`)
+      bmadWarnings++
+    }
+  }
+
+  if (bmadWarnings === 0) {
+    console.log(`✔ bmad.yaml is up to date`)
   }
 }
 

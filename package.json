@@ -5,8 +5,9 @@
   "scripts": {
     "validate": "tsx build/validate-skills.ts",
     "build:manifest": "tsx build/generate-manifest.ts",
+    "bump:plugins": "tsx build/bump-plugins.ts",
     "build:plugins": "tsx build/skill-to-plugin.ts",
-    "release": "npm run build:manifest && npm run build:plugins",
+    "release": "npm run build:manifest && npm run bump:plugins && npm run build:plugins",
     "prepare": "husky"
   },
   "devDependencies": {

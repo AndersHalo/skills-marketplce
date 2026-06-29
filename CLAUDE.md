@@ -9,8 +9,9 @@ Private Halo skills repository. Converts a skills filesystem into Claude Code pl
 - `platforms/marketplace.yaml` — declares which skills form each plugin
 - `platforms/bmad.yaml` — declares which skills go to BMAD and tracks `released_version` per skill
 - `build/skill-to-plugin.ts` — generates `dist/` with plugin structure
-- `build/generate-manifest.ts` — generates `dist/skills-manifest.json` with skills index
-- `dist/skills-manifest.json` — source of truth for current skill versions (generated, do not edit)
+- `build/generate-manifest.ts` — generates `skills-manifest.json` from `.skill-meta.json` files
+- `build/bump-plugins.ts` — reads `skills-manifest.json`, bumps plugin patch version in `marketplace.yaml` when skill versions change
+- `skills-manifest.json` — generated artifact; do not edit
 
 ## .skill-meta.json schema (v2)
 
@@ -151,17 +152,28 @@ modules:
 ## Commands
 
 ```bash
-npm run validate        # validates all .skill-meta.json files with Zod
+npm run validate        # validates all .skill-meta.json files + cross-checks marketplace.yaml and bmad.yaml
+npm run build:manifest  # generates skills-manifest.json from .skill-meta.json files
+npm run bump:plugins    # reads manifest, bumps plugin patch version in marketplace.yaml if skill versions changed
 npm run build:plugins   # generates dist/plugins/ and dist/.claude-plugin/marketplace.json
-npm run build:manifest  # generates dist/skills-manifest.json
-npm run release         # runs manifest + plugins
+npm run release         # runs build:manifest + bump:plugins + build:plugins
 ```
 
-To release skills to BMAD, run `/bmad-release` in Claude Code. It reads `platforms/bmad.yaml`, compares `released_version` against `dist/skills-manifest.json`, transforms changed skills, and updates `released_version` in `platforms/bmad.yaml` after a successful release.
+To release skills to BMAD, run `/bmad-release` in Claude Code. It runs `npm run build:manifest` first, reads `platforms/bmad.yaml`, compares `released_version` against `skills-manifest.json`, transforms changed skills, and updates `released_version` in `platforms/bmad.yaml` after a successful release.
+
+## Skill versioning
+
+`skill_version` in `.skill-meta.json` is the only version a developer edits manually. It drives marketplace plugin bumps (via snapshot diff) and BMAD release detection (via `released_version` comparison).
+
+| Bump | When |
+|---|---|
+| `patch` | Fix — typo, wording correction, clarified instruction. Skill does the same thing, better. |
+| `minor` | Feature — new step, new output, new option. Backwards-compatible. |
+| `major` | Breaking — changed inputs, different outputs, restructured approach. |
 
 ## Plugin versioning
 
-Plugin version is declared in `platforms/marketplace.yaml` (e.g. `version: "1.2.0"`). CI auto-bumps the **patch** number when skill files change and the developer didn't manually update the version. For **minor** (new feature) or **major** (breaking change), edit the version in `marketplace.yaml` before merging.
+Plugin version is declared in `platforms/marketplace.yaml` (e.g. `version: "1.2.0"`). `generate-manifest.ts` auto-bumps the **patch** number when any constituent skill's version changes (tracked via `skill_versions` snapshot in `marketplace.yaml`). For **minor** (new skill added to plugin) or **major** (breaking change), edit the version manually before running `npm run build:manifest`.
 
 ## BMAD versioning
 
