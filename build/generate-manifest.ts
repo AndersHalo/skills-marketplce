@@ -38,7 +38,6 @@ for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
 }
 
 const manifest = {
-  generated: new Date().toISOString(),
   skills: skills.map(skill => ({
     name: skill.skill_name,
     version: skill.skill_version ?? null,
