@@ -60,7 +60,10 @@ for (const [moduleCode, mod] of Object.entries(modules)) {
   }
 
   if (mod.skills.length === 0) {
-    console.log(`⚠ module "${moduleCode}" has no skills — consider removing it from bmad.yaml`)
+    console.log(`removed module "${moduleCode}" — no skills remaining`)
+    delete modules[moduleCode]
+    changed = true
+    needsRelease = true
   }
 }
 

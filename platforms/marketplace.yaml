@@ -1,9 +1,4 @@
 plugins:
-  martech-foundation:
-    version: 1.1.0
-    description: Shared web-development conventions for HubSpot, Shopify, and WordPress marketing-template projects.
-    skill_versions: {}
-    skills: []
   halo-product:
     version: 1.1.0
     description: Product team toolkit for prototyping, roadmap generation, and team governance.

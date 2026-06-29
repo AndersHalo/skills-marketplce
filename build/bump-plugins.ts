@@ -44,7 +44,10 @@ for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
   }
 
   if (plugin.skills.length === 0) {
-    console.log(`⚠ plugin "${pluginName}" has no skills — consider removing it from marketplace.yaml`)
+    console.log(`removed plugin "${pluginName}" — no skills remaining`)
+    delete marketplaceYaml.plugins[pluginName]
+    changed = true
+    continue
   }
 
   // Bump patch version if any skill version changed since last snapshot
