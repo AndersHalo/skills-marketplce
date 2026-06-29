@@ -25,4 +25,4 @@ modules:
     skills:
       - skill: team-governance
         preceded-by: null
-        followed-by: roadmap-build:build-roadmap
+        followed-by: null

@@ -59,6 +59,22 @@ for (const [moduleCode, mod] of Object.entries(modules)) {
     needsRelease = true
   }
 
+  // Nullify followed-by / preceded-by refs pointing to deleted skills
+  for (const s of mod.skills) {
+    for (const field of ['followed-by', 'preceded-by'] as const) {
+      const val = s[field]
+      if (typeof val === 'string') {
+        const referencedSkill = val.split(':')[0]
+        if (!manifestSkills.has(referencedSkill)) {
+          console.log(`nullified ${field} in module "${moduleCode}" skill "${s.skill}": ${val} (no longer in manifest)`)
+          s[field] = null
+          changed = true
+          needsRelease = true
+        }
+      }
+    }
+  }
+
   if (mod.skills.length === 0) {
     console.log(`removed module "${moduleCode}" — no skills remaining`)
     delete modules[moduleCode]
