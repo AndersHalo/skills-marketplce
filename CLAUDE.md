@@ -10,7 +10,8 @@ Private Halo skills repository. Converts a skills filesystem into Claude Code pl
 - `platforms/bmad.yaml` — declares which skills go to BMAD and tracks `released_version` per skill
 - `build/skill-to-plugin.ts` — generates `dist/` with plugin structure
 - `build/generate-manifest.ts` — generates `skills-manifest.json` from `.skill-meta.json` files
-- `build/bump-plugins.ts` — reads `skills-manifest.json`, bumps plugin patch version in `marketplace.yaml` when skill versions change
+- `build/bump-plugins.ts` — reads manifest, removes deleted skills from `marketplace.yaml`, bumps plugin patch version when skill versions change
+- `build/bump-bmad.ts` — reads manifest, removes deleted skills from `platforms/bmad.yaml` workflows and modules
 - `skills-manifest.json` — generated artifact; do not edit
 
 ## .skill-meta.json schema (v2)
@@ -154,9 +155,10 @@ modules:
 ```bash
 npm run validate        # validates all .skill-meta.json files + cross-checks marketplace.yaml and bmad.yaml
 npm run build:manifest  # generates skills-manifest.json from .skill-meta.json files
-npm run bump:plugins    # reads manifest, bumps plugin patch version in marketplace.yaml if skill versions changed
+npm run bump:plugins    # reads manifest, cleans marketplace.yaml, bumps plugin version if skills changed
+npm run bump:bmad       # reads manifest, cleans bmad.yaml workflows and modules
 npm run build:plugins   # generates dist/plugins/ and dist/.claude-plugin/marketplace.json
-npm run release         # runs build:manifest + bump:plugins + build:plugins
+npm run release         # runs build:manifest + bump:plugins + bump:bmad + build:plugins
 ```
 
 To release skills to BMAD, run `/bmad-release` in Claude Code. It runs `npm run build:manifest` first, reads `platforms/bmad.yaml`, compares `released_version` against `skills-manifest.json`, transforms changed skills, and updates `released_version` in `platforms/bmad.yaml` after a successful release.

@@ -30,6 +30,24 @@ const currentVersions = new Map<string, string>(
 let changed = false
 
 for (const [pluginName, plugin] of Object.entries(marketplaceYaml.plugins)) {
+  // Remove skills that no longer exist in the manifest
+  const removed = plugin.skills.filter(s => !currentVersions.has(s))
+  if (removed.length > 0) {
+    for (const s of removed) {
+      console.log(`removed from ${pluginName}: ${s} (no longer in manifest)`)
+    }
+    plugin.skills = plugin.skills.filter(s => currentVersions.has(s))
+    if (plugin.skill_versions) {
+      for (const s of removed) delete plugin.skill_versions[s]
+    }
+    changed = true
+  }
+
+  if (plugin.skills.length === 0) {
+    console.log(`⚠ plugin "${pluginName}" has no skills — consider removing it from marketplace.yaml`)
+  }
+
+  // Bump patch version if any skill version changed since last snapshot
   const snapshot = plugin.skill_versions ?? {}
   const newSnapshot: Record<string, string> = {}
   let needsBump = false
