@@ -22,6 +22,23 @@ interface BmadYaml {
   modules?: Record<string, BmadModule>
 }
 
+// Built-in BMAD skills from https://github.com/bmad-code-org/bmad-method — never nullify references to these
+const BMAD_BUILTINS = new Set([
+  'bmad-brainstorming', 'bmad-party-mode', 'bmad-help', 'bmad-index-docs', 'bmad-shard-doc',
+  'bmad-editorial-review-prose', 'bmad-editorial-review-structure',
+  'bmad-review-adversarial-general', 'bmad-review-edge-case-hunter',
+  'bmad-spec', 'bmad-customize', 'bmad-forge-idea',
+  'bmad-market-research', 'bmad-domain-research', 'bmad-technical-research',
+  'bmad-product-brief', 'bmad-prfaq', 'bmad-prd', 'bmad-ux',
+  'bmad-agent-pm', 'bmad-agent-ux-designer', 'bmad-create-prd', 'bmad-edit-prd', 'bmad-validate-prd',
+  'bmad-architecture', 'bmad-create-epics-and-stories', 'bmad-check-implementation-readiness',
+  'bmad-agent-architect', 'bmad-create-architecture', 'bmad-generate-project-context',
+  'bmad-sprint-planning', 'bmad-sprint-status', 'bmad-create-story', 'bmad-dev-story',
+  'bmad-code-review', 'bmad-checkpoint-preview', 'bmad-qa-generate-e2e-tests', 'bmad-retrospective',
+  'bmad-agent-dev', 'bmad-dev-auto', 'bmad-document-project', 'bmad-quick-dev',
+  'bmad-correct-course', 'bmad-agent-analyst', 'bmad-agent-tech-writer',
+])
+
 const manifest = JSON.parse(fs.readFileSync('skills-manifest.json', 'utf-8')) as Manifest
 const bmadYaml = yaml.load(
   fs.readFileSync('platforms/bmad.yaml', 'utf-8')
@@ -65,7 +82,7 @@ for (const [moduleCode, mod] of Object.entries(modules)) {
       const val = s[field]
       if (typeof val === 'string') {
         const referencedSkill = val.split(':')[0]
-        if (!manifestSkills.has(referencedSkill)) {
+        if (!manifestSkills.has(referencedSkill) && !BMAD_BUILTINS.has(referencedSkill)) {
           console.log(`nullified ${field} in module "${moduleCode}" skill "${s.skill}": ${val} (no longer in manifest)`)
           s[field] = null
           changed = true
